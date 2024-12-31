@@ -1,0 +1,127 @@
+/* src/index.css */
+
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.kanban-board {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Invoice Styling */
+.invoice-table {
+width: 100%;
+border-collapse: collapse;
+margin-top: 20px;
+}
+
+.invoice-table th,
+.invoice-table td {
+border: 1px solid #ddd;
+padding: 8px;
+text-align: left;
+}
+
+.invoice-table th {
+background-color: #f2f2f2;
+}
+
+.btn {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.btn:hover {
+  background-color: #45a049; /* Darker green */
+}
+
+/* New Invoice Form */
+.item-row {
+display: flex;
+align-items: center;
+margin-bottom: 10px;
+}
+
+.item-row label, .item-row button {
+  margin-right: 10px;
+  margin-bottom: 0px;
+}
+
+.item-row input,
+.item-row select {
+padding: 5px;
+margin-bottom: 0px;
+}
+form label {
+display: block;
+margin-bottom: 10px;
+}
+
+form select, form input[type="number"], form input[type="text"] {
+padding: 8px;
+border: 1px solid #ddd;
+border-radius: 4px;
+margin-bottom: 5px;
+}
+
+form button[type="submit"], form button[type="button"] {
+margin-top: 10px;
+  padding: 10px 15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-right: 5px;
+}
+
+.invoice-summary {
+margin-top: 20px;
+  text-align: right;
+}
+
+/* Payment Settings Styling */
+ul {
+list-style-type: none;
+ padding: 0;
+}
+
+ul li {
+margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+ul li input[type="text"] {
+padding: 8px;
+margin-right: 5px;
+}
+
+ul li button {
+  margin-left: 5px;
+  padding: 8px;
+ border: none;
+  cursor: pointer;
+   background-color: #ddd;
+  border-radius: 4px;
+}
+ul li button:hover {
+   background-color: #ccc;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
