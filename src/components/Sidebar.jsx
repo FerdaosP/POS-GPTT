@@ -27,6 +27,22 @@ const Sidebar = () => {
                             <LayoutDashboard className="mr-2" size={16} /> Dashboard
                         </Link>
                     </li>
+                      <li>
+                        <Link
+                            to="/invoices"
+                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
+                        >
+                            <FileText className="mr-2" size={16} /> Invoices
+                        </Link>
+                    </li>
+                       <li>
+                            <Link
+                                to="/invoices/settings"
+                                className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
+                            >
+                                 <Settings className="mr-2" size={16} /> Payment Settings
+                            </Link>
+                        </li>
                     <li>
                         <Link
                             to="/customers"
@@ -59,22 +75,6 @@ const Sidebar = () => {
                             <Package className="mr-2" size={16} /> Inventory
                         </Link>
                     </li>
-                     <li>
-                        <Link
-                            to="/invoices"
-                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                        >
-                            <FileText className="mr-2" size={16} /> Invoices
-                        </Link>
-                    </li>
-                        <li>
-                            <Link
-                                to="/invoices/settings"
-                                className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                            >
-                                 <Settings className="mr-2" size={16} /> Payment Settings
-                            </Link>
-                        </li>
                     <li>
                         <Link
                             to="/reports"
@@ -83,7 +83,7 @@ const Sidebar = () => {
                             <FileBarChart className="mr-2" size={16} /> Reports
                         </Link>
                     </li>
-                    <li>
+                     <li>
                         <Link
                             to="/pos"
                             className="flex items-center hover:text-blue-400 px-2 py-1 rounded"

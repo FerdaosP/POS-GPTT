@@ -4,12 +4,13 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-d
 import Sidebar from "./components/Sidebar";
 import CustomerList from "./components/CustomerList";
 import NewRepairEntry from "./reparatiekaart/NewRepairEntry";
+import InvoiceEntry from "./invoicing/InvoiceEntry";
+
 
 const App = () => {
     const [customers, setCustomers] = useState([]);
-    const [transactionData, setTransactionData] = useState({
-        items: [],
-    });
+     const [invoices, setInvoices] = useState([]);
+
 
     const handleSaveCustomer = (customer) => {
         if (customer.id) {
@@ -36,6 +37,10 @@ const App = () => {
                 <div className="w-3/4 p-4">
                     <Routes>
                         <Route path="/" element={<Navigate to="/invoices" replace />} />
+                         <Route
+                            path="/invoices"
+                            element={<InvoiceEntry invoices={invoices} onSaveInvoice={setInvoices} />}
+                        />
                         <Route
                             path="/customers"
                             element={
@@ -46,7 +51,7 @@ const App = () => {
                                 />
                             }
                         />
-                        <Route
+                         <Route
                             path="/new-repair"
                             element={<NewRepairEntry />}
                         />
