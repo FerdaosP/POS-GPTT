@@ -79,7 +79,7 @@ class ItemRow extends React.Component {
           <EditableField
             onItemizedItemEdit={this.props.onItemizedItemEdit}
             cellData={{
-            leading: this.props.currency,
+            leading: this.props.currency, // Added this again
             type: "number",
             name: "price",
             min: 1,

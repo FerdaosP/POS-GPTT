@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { AlertCircle, Download, FileText, File } from "lucide-react";
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import axios from 'axios';
 
 import Alert, { AlertDescription } from "@/reparatiekaart/alert";
 import RepairList from "./RepairList";
@@ -15,26 +16,7 @@ import RepairTicketPrint from "./RepairTicketPrint";
 import Loading from "./Loading"; // Corrected import for Loading component
 
 const NewRepairEntry = () => {
-    const [repairs, setRepairs] = useState([
-        {
-            repairTicketNumber: "REP-20241228-001",
-            paymentStatus: "Not Paid",
-            repairStatus: "Received",
-            customerName: "John Doe",
-            phoneNumber: "1234567890",
-            deviceType: "Laptop",
-            imei: "123456789012345",
-            accessCode: "1234",
-            simCode: "5678",
-            issueDescription: "Screen is cracked",
-            priceEstimate: "150",
-            repairTechnician: "Jane Smith",
-            dateReceived: "2024-12-28",
-            completionDate: "",
-            notes: "Customer wants a quick fix.",
-            attachments: [],
-        },
-    ]);
+    const [repairs, setRepairs] = useState([]);
     const [showAddRepairForm, setShowAddRepairForm] = useState(false);
     const [isLoadingAddRepair, setIsLoadingAddRepair] = useState(false);
     const [isLoadingStatusUpdate, setIsLoadingStatusUpdate] = useState(false);
@@ -58,6 +40,7 @@ const NewRepairEntry = () => {
     const [selectedPatternRepair, setSelectedPatternRepair] = useState(null);
     const [selectedRepairs, setSelectedRepairs] = useState([]); // Added selectedRepairs state
 
+   const apiUrl = 'http://localhost:8000/api/repairs/';
 
     const repairStatusOptions = [
         "Received",
@@ -70,35 +53,31 @@ const NewRepairEntry = () => {
     ];
 
     useEffect(() => {
-        // Load repairs from local storage or API on component mount
-        const storedRepairs = localStorage.getItem("repairs");
-        if (storedRepairs) {
-            setRepairs(JSON.parse(storedRepairs));
-        }
+        fetchRepairs();
     }, []);
 
-    useEffect(() => {
-        // Save repairs to local storage whenever repairs state changes
-        localStorage.setItem("repairs", JSON.stringify(repairs));
-    }, [repairs]);
+     const fetchRepairs = async () => {
+        try {
+            const response = await axios.get(apiUrl);
+            setRepairs(JSON.parse(JSON.stringify(response.data)));
+        } catch (error) {
+            console.error("Error fetching repairs:", error);
+            showNotification("Error fetching repairs! Check the console.", "error");
+        }
+    };
 
     const handleStatusUpdate = async (id, newStatus) => {
         setIsLoadingStatusUpdate(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            setRepairs((prevRepairs) =>
-                prevRepairs.map((repair) =>
-                    repair.repairTicketNumber === id
-                        ? { ...repair, repairStatus: newStatus }
-                        : repair
-                )
-            );
+            await axios.patch(`${apiUrl}${id}/`, { repairStatus: newStatus });
+             fetchRepairs();
             addToHistory(id, "status_update", `Status updated to ${newStatus}`);
             if (newStatus === "Completed") {
                 console.log(`Email sent to customer for ticket ${id}`);
             }
             showNotification("Status updated successfully!");
         } catch (error) {
+            console.error("Error updating status:", error);
             showNotification("Error updating status!", "error");
         } finally {
             setIsLoadingStatusUpdate(false);
@@ -121,21 +100,21 @@ const NewRepairEntry = () => {
         setTimeout(() => setNotification(null), 3000);
     };
 
-    const handleAddRepair = async (newRepairData) => {
+   const handleAddRepair = async (newRepairData) => {
         setIsLoadingAddRepair(true);
-        try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            const repairWithHistory = { ...newRepairData, repairTicketNumber: generateRepairID() };
-            setRepairs((prevRepairs) => [...prevRepairs, repairWithHistory]);
-            addToHistory(repairWithHistory.repairTicketNumber, "created", "Repair ticket created");
+          try {
+            await axios.post(apiUrl, newRepairData);
+            fetchRepairs();
+            addToHistory(newRepairData.repairTicketNumber, "created", "Repair ticket created");
             showNotification("Repair added successfully!");
             setShowAddRepairForm(false);
-        } catch (error) {
-            showNotification("Error adding repair!", "error");
-        } finally {
-            setIsLoadingAddRepair(false);
-        }
-    };
+         } catch (error) {
+             console.error("Error adding repair:", error);
+             showNotification("Error adding repair!", "error");
+         } finally {
+             setIsLoadingAddRepair(false);
+          }
+      };
 
 
     const handleEdit = (repair) => {
@@ -145,15 +124,8 @@ const NewRepairEntry = () => {
     const handleUpdateRepair = async (updatedRepair) => {
         setIsLoadingUpdate(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-
-            setRepairs((prevRepairs) =>
-                prevRepairs.map((repair) =>
-                    repair.repairTicketNumber === updatedRepair.repairTicketNumber
-                        ? { ...updatedRepair }
-                        : repair
-                )
-            );
+            await axios.put(`${apiUrl}${updatedRepair.repairTicketNumber}/`, updatedRepair);
+           fetchRepairs();
             addToHistory(
                 updatedRepair.repairTicketNumber,
                 "updated",
@@ -162,6 +134,7 @@ const NewRepairEntry = () => {
             showNotification("Repair updated successfully!");
             setEditRepair(null);
         } catch (error) {
+              console.error("Error updating repair:", error);
             showNotification("Error updating repair!", "error");
         } finally {
             setIsLoadingUpdate(false);
@@ -176,16 +149,13 @@ const NewRepairEntry = () => {
     const handleDeleteRepair = async (repairId) => {
         setIsLoadingDelete(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            setRepairs((prevRepairs) =>
-                prevRepairs.filter(
-                    (repair) => repair.repairTicketNumber !== repairId
-                )
-            );
+           await axios.delete(`${apiUrl}${repairId}/`);
+            fetchRepairs();
             addToHistory(repairId, "deleted", "Repair ticket deleted");
             showNotification("Repair deleted successfully!");
             setDeleteRepairId(null);
         } catch (error) {
+            console.error("Error deleting repair:", error);
             showNotification("Error deleting repair!", "error");
         } finally {
             setIsLoadingDelete(false);

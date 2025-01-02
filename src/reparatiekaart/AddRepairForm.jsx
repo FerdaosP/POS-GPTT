@@ -13,8 +13,8 @@ const AddRepairForm = ({ isOpen, onClose, onSave }) => {
     deviceType: "",
     imei: "",
     accessCode: "",
-    usePattern: false, // Added usePattern
-    pattern: "", // Added pattern field
+    usePattern: false,
+    pattern: "",
     simCode: "",
     issueDescription: "",
     priceEstimate: "",
@@ -31,16 +31,37 @@ const AddRepairForm = ({ isOpen, onClose, onSave }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+        let updatedValue = type === "checkbox" ? checked : value;
+        
+        if (name === "completionDate") {
+            try {
+                const dateObject = value ? new Date(value) : null;
+                updatedValue = dateObject ? dateObject.toISOString().split("T")[0] : null;
+              } catch(error) {
+                   updatedValue = null;
+              }
+        }
+   
+        if (name === "dateReceived" && value) {
+             try {
+               const dateObject = new Date(value);
+               updatedValue = dateObject.toISOString().split("T")[0];
+           } catch (error) {
+                 updatedValue = null;
+             }
+         }
+   
     setNewRepair((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: updatedValue,
     }));
       if (name === "usePattern" && checked) {
           setShowPatternModal(true);
       } else if (name === "usePattern") {
           setNewRepair(prev => ({...prev, pattern: ""}));
       }
-  };
+   };
+
   const handleAttachmentChange = (e) => {
     const files = Array.from(e.target.files);
 

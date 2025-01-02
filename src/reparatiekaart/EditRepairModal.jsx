@@ -10,23 +10,40 @@ const EditRepairModal = ({ repair, isOpen, onClose, onSave }) => {
         setEditedRepair(repair);
     }, [repair]);
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
 
-      setEditedRepair((prev) => {
-          let updatedValue = type === "checkbox" ? checked : value;
+        setEditedRepair((prev) => {
+            let updatedValue = type === "checkbox" ? checked : value;
 
-          if(name === "usePattern" && checked){
+             if (name === "completionDate") {
+                   try {
+                      const dateObject = value ? new Date(value) : null;
+                       updatedValue = dateObject ? dateObject.toISOString().split("T")[0] : null;
+                    } catch(error) {
+                         updatedValue = null;
+                      }
+             }
+               if (name === "dateReceived" && value) {
+                   try {
+                     const dateObject = new Date(value);
+                    updatedValue = dateObject.toISOString().split("T")[0];
+                  } catch (error) {
+                      updatedValue = null;
+                    }
+                  }
+
+
+            if(name === "usePattern" && checked){
                 setShowPatternModal(true)
-          } else if(name === "usePattern"){
-              updatedValue = false;
-              return { ...prev, [name]: updatedValue, pattern: "" }
-            }
+            } else if(name === "usePattern"){
+                updatedValue = false;
+                return { ...prev, [name]: updatedValue, pattern: "" }
+              }
 
-          return { ...prev, [name]: updatedValue };
-
-      });
-  };
+            return { ...prev, [name]: updatedValue };
+        });
+    };
 
     const handlePatternSelect = (pattern) => {
         setEditedRepair(prev => ({...prev, pattern: pattern}));
