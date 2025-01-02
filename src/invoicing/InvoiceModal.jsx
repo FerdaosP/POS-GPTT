@@ -1,36 +1,334 @@
+// File: POS-GPT-main/src/invoicing/InvoiceModal.jsx
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Row, Col, Button, Table, Modal } from 'react-bootstrap';
+import { Row, Col, Button, Table, Modal, Form } from 'react-bootstrap';
 import { BiPaperPlane, BiCloudDownload } from "react-icons/bi";
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf'
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
+import axios from 'axios';
 
-function GenerateInvoice() {
-  html2canvas(document.querySelector("#invoiceCapture")).then((canvas) => {
-    const imgData = canvas.toDataURL('image/png', 1.0);
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'pt',
-      format: [612, 792]
-    });
-    pdf.internal.scaleFactor = 1;
-    const imgProps= pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save('invoice-001.pdf');
-  });
-}
+pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
 class InvoiceModal extends React.Component {
-  constructor(props) {
-    super(props);
-  }
+    constructor(props) {
+        super(props);
+        this.state = {
+           recipientEmail: this.props.info?.billToEmail || '',
+           loading: false,
+            error: null,
+            pdfInitialized: false
+        }
+        this.generatePDFForDownload = this.generatePDFForDownload.bind(this);
+        this.handleSend = this.handleSend.bind(this);
+    }
+     componentDidMount() {
+        try {
+          pdfMake.vfs = pdfFonts.pdfMake.vfs;
+          this.setState({pdfInitialized: true});
+        } catch (e) {
+          console.error("Error initializing pdfMake", e);
+            this.setState({error: "Error initializing PDF, please check console"});
+        }
+    }
+    handleEmailChange = (e) => {
+        this.setState({recipientEmail: e.target.value});
+    };
+   generatePDFForDownload = async () => {
+        const { info, items, companyInfo, currency, subTotal, taxAmmount, discountAmmount, total } = this.props;
+        try {
+
+            const docDefinition = {
+                content: [
+                    { text: `${companyInfo?.companyName || 'John Uberbacher'}`, style: 'header' },
+                    { text: `Invoice #: ${info?.invoiceNumber || ''}`, style: 'subheader' },
+                    {
+                        columns: [
+                            { text: 'Billed to:', style: 'sectionHeader' },
+                            { text: 'Billed From:', style: 'sectionHeader' },
+                            { text: 'Date Of Issue:', style: 'sectionHeader' }
+                        ],
+                    },
+                    {
+                        columns: [
+                            [
+                                { text: info?.billTo || '' },
+                                { text: info?.billToAddress || '' },
+                                { text: info?.billToEmail || '' }
+                            ],
+                            [
+                                { text: companyInfo?.companyName || '' },
+                                { text: companyInfo?.address || '' },
+                                { text: companyInfo?.email || '' }
+                            ],
+                            { text: info?.dateOfIssue || '' },
+                        ]
+                    },
+                    {
+                        text: 'Items',
+                        style: 'sectionHeader',
+                        margin: [0, 10, 0, 5]
+                    },
+                    {
+                        table: {
+                            body: [
+                                [
+                                    { text: "QTY", style: "tableHeader" },
+                                    { text: "DESCRIPTION", style: "tableHeader" },
+                                    { text: "PRICE", style: "tableHeader" },
+                                    { text: "AMOUNT", style: "tableHeader" },
+                                ],
+                                ...(items || []).map((item) => [
+                                    item.quantity,
+                                    `${item.name} - ${item.description}`,
+                                    `${currency}${item.price}`,
+                                    `${currency}${(item.price * item.quantity).toFixed(2)}`
+                                ]),
+                                [
+                                    {}, {}, { text: 'Subtotal', style: "totalTitle" }, { text: `${currency}${subTotal || 0}`, style: 'totalAmount' }
+                                ],
+                                [
+                                    {}, {}, { text: 'Tax', style: "totalTitle" }, { text: `${currency}${taxAmmount || 0}`, style: 'totalAmount' }
+                                ],
+                                [
+                                    {}, {}, { text: 'Discount', style: "totalTitle" }, { text: `${currency}${discountAmmount || 0}`, style: 'totalAmount' }
+                                ],
+                                [
+                                    {}, {}, { text: 'Total', style: "totalTitle" }, { text: `${currency}${total || 0}`, style: 'totalAmount' }
+                                ]
+                            ]
+                        },
+                        layout: 'noBorders',
+                    },
+                    {
+                        text: info?.notes || '',
+                        style: 'notes',
+                        margin: [0, 10, 0, 0]
+                    }
+                ],
+                styles: {
+                    header: {
+                        fontSize: 20,
+                        bold: true,
+                        margin: [0, 0, 0, 10]
+                    },
+                    subheader: {
+                        fontSize: 16,
+                        bold: true,
+                        margin: [0, 0, 0, 5]
+                    },
+                    sectionHeader: {
+                        fontSize: 14,
+                        bold: true,
+                        margin: [0, 5, 0, 5],
+                    },
+                    tableHeader: {
+                        bold: true,
+                        fontSize: 10
+                    },
+                    notes: {
+                        fontSize: 10,
+                        italics: true
+                    },
+                    totalTitle: {
+                        bold: true,
+                        alignment: "right",
+                        margin: [0, 5, 10, 0]
+                    },
+                    totalAmount: {
+                        bold: true,
+                        alignment: "right",
+                        margin: [0, 5, 0, 0]
+                    }
+                }
+            };
+
+            const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+
+            pdfDocGenerator.getBlob((blob) => {
+                const blobUrl = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = `invoice-${info.invoiceNumber}.pdf`;
+                link.click();
+                URL.revokeObjectURL(blobUrl); // Clean up the URL object
+           });
+        } catch (e) {
+          console.error('Error creating PDF:', e);
+          alert('There was an error creating the PDF, please check console')
+        }
+    };
+    generatePDF = async () => {
+        const { info, items, companyInfo, currency, subTotal, taxAmmount, discountAmmount, total } = this.props;
+           if (!this.state.pdfInitialized) {
+               this.setState({error: "Error initializing PDF, please check console"});
+               return null;
+           }
+        try {
+
+            const docDefinition = {
+                content: [
+                    { text: `${companyInfo?.companyName || 'John Uberbacher'}`, style: 'header' },
+                    { text: `Invoice #: ${info?.invoiceNumber || ''}`, style: 'subheader' },
+                    {
+                        columns: [
+                            { text: 'Billed to:', style: 'sectionHeader' },
+                            { text: 'Billed From:', style: 'sectionHeader' },
+                            { text: 'Date Of Issue:', style: 'sectionHeader' }
+                        ],
+                    },
+                    {
+                        columns: [
+                            [
+                                { text: info?.billTo || '' },
+                                { text: info?.billToAddress || '' },
+                                { text: info?.billToEmail || '' }
+                            ],
+                            [
+                                { text: companyInfo?.companyName || '' },
+                                { text: companyInfo?.address || '' },
+                                { text: companyInfo?.email || '' }
+                            ],
+                            { text: info?.dateOfIssue || '' },
+                        ]
+                    },
+                    {
+                        text: 'Items',
+                        style: 'sectionHeader',
+                        margin: [0, 10, 0, 5]
+                    },
+                    {
+                        table: {
+                            body: [
+                                [
+                                    { text: "QTY", style: "tableHeader" },
+                                    { text: "DESCRIPTION", style: "tableHeader" },
+                                    { text: "PRICE", style: "tableHeader" },
+                                    { text: "AMOUNT", style: "tableHeader" },
+                                ],
+                                ...(items || []).map((item) => [
+                                    item.quantity,
+                                    `${item.name} - ${item.description}`,
+                                    `${currency}${item.price}`,
+                                    `${currency}${(item.price * item.quantity).toFixed(2)}`
+                                ]),
+                                [
+                                    {}, {}, { text: 'Subtotal', style: "totalTitle" }, { text: `${currency}${subTotal || 0}`, style: 'totalAmount' }
+                                ],
+                                [
+                                    {}, {}, { text: 'Tax', style: "totalTitle" }, { text: `${currency}${taxAmmount || 0}`, style: 'totalAmount' }
+                                ],
+                                [
+                                    {}, {}, { text: 'Discount', style: "totalTitle" }, { text: `${currency}${discountAmmount || 0}`, style: 'totalAmount' }
+                                ],
+                                [
+                                    {}, {}, { text: 'Total', style: "totalTitle" }, { text: `${currency}${total || 0}`, style: 'totalAmount' }
+                                ]
+                            ]
+                        },
+                        layout: 'noBorders',
+                    },
+                    {
+                        text: info?.notes || '',
+                        style: 'notes',
+                        margin: [0, 10, 0, 0]
+                    }
+                ],
+                styles: {
+                    header: {
+                        fontSize: 20,
+                        bold: true,
+                        margin: [0, 0, 0, 10]
+                    },
+                    subheader: {
+                        fontSize: 16,
+                        bold: true,
+                        margin: [0, 0, 0, 5]
+                    },
+                    sectionHeader: {
+                        fontSize: 14,
+                        bold: true,
+                        margin: [0, 5, 0, 5],
+                    },
+                    tableHeader: {
+                        bold: true,
+                        fontSize: 10
+                    },
+                    notes: {
+                        fontSize: 10,
+                        italics: true
+                    },
+                    totalTitle: {
+                        bold: true,
+                        alignment: "right",
+                        margin: [0, 5, 10, 0]
+                    },
+                    totalAmount: {
+                        bold: true,
+                        alignment: "right",
+                        margin: [0, 5, 0, 0]
+                    }
+                }
+            };
+
+            const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+           const pdfBlob = await new Promise((resolve) => {
+                pdfDocGenerator.getBlob((blob) => {
+                     resolve(blob);
+                });
+            });
+            return pdfBlob;
+        } catch (e) {
+          console.error('Error creating PDF:', e);
+          this.setState({error: 'There was an error creating the PDF, please check console'});
+          return null
+        }
+    };
+   handleSend = async () => {
+       this.setState({ loading: true, error: null });
+        try {
+            const { info } = this.props;
+            const pdfBlob = await this.generatePDF();
+            if (!pdfBlob) {
+                this.setState({ loading: false });
+                return;
+            }
+            const pdfFile = new File([pdfBlob], `invoice-${info.invoiceNumber}.pdf`, { type: 'application/pdf' });
+
+            const formData = new FormData();
+            formData.append('pdf_file', pdfFile);
+             formData.append('recipientEmail', this.state.recipientEmail);
+           console.log("Form data: ", formData);
+
+
+            const response = await axios.post(
+                 `http://localhost:8000/api/invoices/${info.invoiceNumber}/send_invoice/`,
+                 formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+             );
+            if (response.data.message) {
+                alert(response.data.message);
+            } else {
+                alert("Email sent successfully");
+            }
+             this.setState({ loading: false });
+             this.props.onSaveInvoice(info);
+            this.props.closeModal();
+         } catch (err) {
+            console.error('Error sending invoice:', err);
+             this.setState({ error: `Error sending email. Please check the console for more details. ${err.message}` });
+              this.setState({ loading: false });
+        }
+    };
+    handleSave = () => {
+       this.props.onSaveInvoice(this.props.info);
+       this.props.closeModal();
+   };
   render() {
     const { showModal, closeModal, currency, subTotal, taxAmmount, discountAmmount, total, items, info, companyInfo} = this.props;
-       if (!info || !companyInfo) {
-      return null;
-   }
+      const { loading, error, recipientEmail} = this.state;
+      if (!info || !companyInfo) {
+        return null;
+      }
     return(
       <div>
         <Modal show={showModal} onHide={closeModal} size="lg" centered>
@@ -132,18 +430,34 @@ class InvoiceModal extends React.Component {
             </div>
           </div>
           <div className="pb-4 px-4">
+             {error && <p className="text-danger mb-3">{error}</p>}
+              <Form.Group className="mb-3">
+                 <Form.Label>Recipient Email:</Form.Label>
+                 <Form.Control
+                    type="email"
+                    value={recipientEmail}
+                    onChange={this.handleEmailChange}
+                    placeholder="Enter recipient email"
+                    required
+                 />
+               </Form.Group>
             <Row>
               <Col md={6}>
-                <Button variant="primary" className="d-block w-100" onClick={GenerateInvoice}>
-                  <BiPaperPlane style={{width: '15px', height: '15px', marginTop: '-3px'}} className="me-2"/>Send Invoice
+                <Button variant="primary" className="d-block w-100"  onClick={this.handleSend} disabled={loading}>
+                     {loading ? 'Sending...' : ( <><BiPaperPlane style={{width: '15px', height: '15px', marginTop: '-3px'}} className="me-2"/>Send Invoice</>)}
                 </Button>
               </Col>
               <Col md={6}>
-                <Button variant="outline-primary" className="d-block w-100 mt-3 mt-md-0" onClick={GenerateInvoice}>
+                <Button variant="outline-primary" className="d-block w-100 mt-3 mt-md-0" onClick={ () => { this.generatePDFForDownload() }}>
                   <BiCloudDownload style={{width: '16px', height: '16px', marginTop: '-3px'}} className="me-2"/>
                   Download Copy
                 </Button>
               </Col>
+               <Col md={12} className="mt-3">
+                    <Button variant="secondary" className="d-block w-100" onClick={this.handleSave}>
+                        Save Invoice
+                    </Button>
+                </Col>
             </Row>
           </div>
         </Modal>
