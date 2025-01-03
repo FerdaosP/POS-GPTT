@@ -93,6 +93,7 @@ const InvoiceListEntry = ({companyInfo}) => {
 
    const handleAddInvoice = async (newInvoiceData) => {
         setIsLoadingAddInvoice(true);
+          console.log('Invoice data before submit:', newInvoiceData);
           try {
             await axios.post(apiUrl, newInvoiceData);
             fetchInvoices();

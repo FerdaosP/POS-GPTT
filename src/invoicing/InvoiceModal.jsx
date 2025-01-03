@@ -1,4 +1,3 @@
-// File: POS-GPT-main/src/invoicing/InvoiceModal.jsx
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Row, Col, Button, Table, Modal, Form } from 'react-bootstrap';
@@ -20,6 +19,8 @@ class InvoiceModal extends React.Component {
         }
         this.generatePDFForDownload = this.generatePDFForDownload.bind(this);
         this.handleSend = this.handleSend.bind(this);
+         this.handleSave = this.handleSave.bind(this);
+          this.handleSaveOnly = this.handleSaveOnly.bind(this);
     }
      componentDidMount() {
         try {
@@ -283,46 +284,56 @@ class InvoiceModal extends React.Component {
           return null
         }
     };
-   handleSend = async () => {
-       this.setState({ loading: true, error: null });
-        try {
-            const { info } = this.props;
-            const pdfBlob = await this.generatePDF();
-            if (!pdfBlob) {
-                this.setState({ loading: false });
-                return;
-            }
-            const pdfFile = new File([pdfBlob], `invoice-${info.invoiceNumber}.pdf`, { type: 'application/pdf' });
-
-            const formData = new FormData();
-            formData.append('pdf_file', pdfFile);
-             formData.append('recipientEmail', this.state.recipientEmail);
-           console.log("Form data: ", formData);
-
-
-            const response = await axios.post(
-                 `http://localhost:8000/api/invoices/${info.invoiceNumber}/send_invoice/`,
-                 formData,
-                { headers: { 'Content-Type': 'multipart/form-data' } }
-             );
-            if (response.data.message) {
-                alert(response.data.message);
-            } else {
-                alert("Email sent successfully");
-            }
-             this.setState({ loading: false });
-             this.props.onSaveInvoice(info);
-            this.props.closeModal();
-         } catch (err) {
-            console.error('Error sending invoice:', err);
-             this.setState({ error: `Error sending email. Please check the console for more details. ${err.message}` });
+     handleSend = async () => {
+      this.setState({ loading: true, error: null });
+      try {
+          const { info } = this.props;
+          const pdfBlob = await this.generatePDF();
+          if (!pdfBlob) {
               this.setState({ loading: false });
-        }
+              return;
+          }
+          const pdfFile = new File([pdfBlob], `invoice-${info.invoiceNumber}.pdf`, { type: 'application/pdf' });
+  
+          const formData = new FormData();
+          formData.append('pdf_file', pdfFile);
+          formData.append('recipientEmail', this.state.recipientEmail);
+  
+          const response = await axios.post(
+              `http://localhost:8000/api/invoices/${info.invoiceNumber}/send_invoice/`,
+              formData,
+              { headers: { 'Content-Type': 'multipart/form-data' } }
+          );
+          if (response.data.message) {
+              alert(response.data.message);
+          } else {
+              alert("Email sent successfully");
+          }
+          this.setState({ loading: false });
+          this.props.onSaveInvoice(info);
+          this.props.closeModal();
+      } catch (err) {
+          console.error('Error sending invoice:', err);
+          this.setState({ error: `Error sending email. Please check the console for more details. ${err.message}` });
+          this.setState({ loading: false });
+      }
+  };
+      handleSave = async () => {
+        this.setState({ loading: true, error: null });
+          try{
+            this.props.onSaveInvoice(this.props.info);
+            this.setState({ loading: false });
+             this.props.closeModal();
+          } catch (err) {
+              console.error('Error saving invoice:', err);
+             this.setState({ error: `Error saving invoice. Please check the console for more details. ${err.message}` });
+             this.setState({ loading: false });
+          }
     };
-    handleSave = () => {
-       this.props.onSaveInvoice(this.props.info);
-       this.props.closeModal();
-   };
+    handleSaveOnly = () => {
+        this.props.onSaveInvoice(this.props.info);
+        this.props.closeModal();
+    }
   render() {
     const { showModal, closeModal, currency, subTotal, taxAmmount, discountAmmount, total, items, info, companyInfo} = this.props;
       const { loading, error, recipientEmail} = this.state;
@@ -454,8 +465,8 @@ class InvoiceModal extends React.Component {
                 </Button>
               </Col>
                <Col md={12} className="mt-3">
-                    <Button variant="secondary" className="d-block w-100" onClick={this.handleSave}>
-                        Save Invoice
+                    <Button variant="secondary" className="d-block w-100" onClick={this.handleSaveOnly} disabled={loading}>
+                        {loading ? "Saving..." : "Save Invoice"}
                     </Button>
                 </Col>
             </Row>

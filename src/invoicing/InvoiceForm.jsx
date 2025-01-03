@@ -134,9 +134,10 @@ class InvoiceForm extends React.Component {
         this.setState({isOpen: true})
     };
     closeModal = (event) => this.setState({isOpen: false});
-    handleSubmit = (event) => {
+     handleSubmit = (event) => {
         event.preventDefault();
        this.openModal(event)
+         console.log('Invoice data before modal:', this.state);
 
     };
     render() {

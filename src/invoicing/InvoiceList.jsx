@@ -59,6 +59,7 @@ const InvoiceList = ({
                                     Status
                                 </th>
                                 <th className="py-2 px-4">Actions</th>
+                                 <th className="py-2 px-4">Buttons</th>
                             </tr>
                          </thead>
                         <tbody>

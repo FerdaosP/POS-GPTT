@@ -88,7 +88,7 @@ const App = () => {
                                 />
                                  <Route
                                     path="/new-repair"
-                                    element={<NewRepairEntry />}
+                                    element={<NewRepairEntry companyInfo={companyInfo} />}
                                 />
                                  <Route
                                     path="/invoices/settings"
