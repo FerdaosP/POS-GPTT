@@ -23,6 +23,7 @@ const Sidebar = () => {
                         <Link
                             to="/"
                             className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
+                            aria-label="Dashboard"
                         >
                             <LayoutDashboard className="mr-2" size={16} /> Dashboard
                         </Link>
@@ -31,46 +32,35 @@ const Sidebar = () => {
                         <Link
                             to="/invoices"
                             className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
+                            aria-label="Invoices"
                         >
                             <FileText className="mr-2" size={16} /> Invoices
                         </Link>
                     </li>
-                       <li>
-                            <Link
-                                to="/invoices/settings"
-                                className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                            >
-                                 <Settings className="mr-2" size={16} /> Payment Settings
-                            </Link>
-                        </li>
                     <li>
                         <Link
                             to="/customers"
                             className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
+                             aria-label="Customers"
                         >
                             <Users className="mr-2" size={16} /> Customers
                         </Link>
                     </li>
-                    <li>
+                      <li>
                         <Link
-                            to="/repairs"
+                            to="/repair-tickets"
                             className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
+                            aria-label="Repair Tickets"
                         >
-                            <Wrench className="mr-2" size={16} /> Repairs
+                            <FilePlus className="mr-2" size={16} /> Repair Tickets
                         </Link>
                     </li>
-                    <li>
-                        <Link
-                            to="/new-repair"
-                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                        >
-                            <FilePlus className="mr-2" size={16} /> New Repair Entry
-                        </Link>
-                    </li>
+
                     <li>
                         <Link
                             to="/inventory"
                             className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
+                            aria-label="Inventory"
                         >
                             <Package className="mr-2" size={16} /> Inventory
                         </Link>
@@ -79,6 +69,7 @@ const Sidebar = () => {
                         <Link
                             to="/reports"
                             className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
+                             aria-label="Reports"
                         >
                             <FileBarChart className="mr-2" size={16} /> Reports
                         </Link>
@@ -87,10 +78,20 @@ const Sidebar = () => {
                         <Link
                             to="/pos"
                             className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
+                            aria-label="Point of Sale"
                         >
                             <ShoppingCart className="mr-2" size={16} /> Point of Sale
                         </Link>
                     </li>
+                       <li >
+                            <Link
+                                to="/invoices/settings"
+                                className="flex items-center hover:text-blue-400 px-2 py-1 rounded absolute bottom-0 w-full"
+                                  aria-label="Settings"
+                            >
+                                 <Settings className="mr-2" size={16} /> Settings
+                            </Link>
+                        </li>
                 </ul>
             </div>
         </aside>
