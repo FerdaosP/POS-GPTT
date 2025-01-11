@@ -122,6 +122,62 @@ ul li button:hover {
    background-color: #ccc;
 }
 
+.full-width-container {
+  width: 100%;
+  display: block;
+}
+
+.bg-white.p-6.rounded-lg {
+    overflow-y: auto;
+}
+@media print {
+    @page {
+        size: auto;   /* auto is the initial value */
+        margin: 0mm;
+    }
+     body {
+        margin: 0;
+        padding: 0;
+    }
+    .print-ticket {
+      width: 80mm;
+     padding: 5mm;
+     page-break-after: always;
+    }
+  /* Remove header/footer */
+  @page {
+    margin: 0;
+  }
+  /* Hide specific elements */
+  @page {
+      size: auto;
+     margin: 0mm;
+      @bottom-center {
+         content: "";
+      }
+
+      @top-center {
+        content: "";
+      }
+  }
+}
+.customer-dropdown{
+     position: absolute;
+     z-index: 100;
+    border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+         top: 100%;
+        margin-top: 0.2rem;
+        border: 1px solid #ddd;
+
+}
+.customer-dropdown select {
+  border: none;
+   border-radius: 4px;
+}
+.customer-dropdown option:hover{
+background-color: #ddd;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

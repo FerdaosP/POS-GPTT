@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { AlertCircle, Download, FileText, File } from "lucide-react";
+import { AlertCircle, Download, FileText, File, Trash2 } from "lucide-react";
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import axios from 'axios';
@@ -15,11 +15,12 @@ import { generateRepairID } from "./utils";
 import RepairTicketPrint from "./RepairTicketPrint";
 import Loading from "./Loading"; // Corrected import for Loading component
 
-const NewRepairEntry = () => {
+const NewRepairEntry = ({companyInfo}) => {
     const [repairs, setRepairs] = useState([]);
     const [showAddRepairForm, setShowAddRepairForm] = useState(false);
     const [isLoadingAddRepair, setIsLoadingAddRepair] = useState(false);
     const [isLoadingStatusUpdate, setIsLoadingStatusUpdate] = useState(false);
+     const [isLoadingBulkDelete, setIsLoadingBulkDelete] = useState(false);
     const [isLoadingDelete, setIsLoadingDelete] = useState(false);
     const [isLoadingUpdate, setIsLoadingUpdate] = useState(false);
     const [isLoadingExport, setIsLoadingExport] = useState(false);
@@ -160,6 +161,22 @@ const NewRepairEntry = () => {
         } finally {
             setIsLoadingDelete(false);
         }
+    };
+     const handleBulkDelete = async () => {
+        setIsLoadingBulkDelete(true);
+        try {
+               await Promise.all(selectedRepairs.map(async (id) => {
+                    await axios.delete(`${apiUrl}${id}/`);
+                }))
+               fetchRepairs();
+              setSelectedRepairs([]);
+             showNotification("Repairs deleted successfully!");
+        } catch (error) {
+           console.error("Error deleting repair:", error);
+            showNotification("Error deleting repair!", "error");
+         } finally {
+           setIsLoadingBulkDelete(false);
+       }
     };
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -331,7 +348,7 @@ const NewRepairEntry = () => {
 
     return (
         <div className="p-4 relative">
-            {(isLoadingAddRepair || isLoadingStatusUpdate || isLoadingDelete || isLoadingUpdate || isLoadingExport) && (
+            {(isLoadingAddRepair || isLoadingStatusUpdate || isLoadingDelete || isLoadingUpdate || isLoadingExport || isLoadingBulkDelete) && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white p-4 rounded-lg flex items-center space-x-2">
                         <Loading className="animate-spin" isLoading={true} />
@@ -418,6 +435,14 @@ const NewRepairEntry = () => {
                         <File size={16} />
                         <span>PDF</span>
                     </button>
+                    <button
+                        onClick={handleBulkDelete}
+                        className="bg-red-600 text-white px-4 py-2 rounded flex items-center space-x-2"
+                        aria-label="Delete Selected"
+                    >
+                         <Trash2 size={16} />
+                         <span>Delete Selected</span>
+                     </button>
                 </div>
                 {/* Pagination Controls */}
                 <div className="flex space-x-2">
@@ -494,6 +519,7 @@ const NewRepairEntry = () => {
                 isOpen={!!printPreviewRepair}
                 onClose={() => setPrintPreviewRepair(null)}
                 repair={printPreviewRepair}
+                companyInfo={companyInfo}
             />
         </div>
     );

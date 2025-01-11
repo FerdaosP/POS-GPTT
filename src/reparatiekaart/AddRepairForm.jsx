@@ -1,67 +1,103 @@
-import React, { useState, useEffect } from "react";
-import { XCircle, FileText } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { XCircle, FileText, UserPlus } from "lucide-react";
 import { generateRepairID } from "./utils";
 import PatternModal from "./PatternModal";
 import axios from "axios";
+import CustomerForm from "../components/CustomerForm";
 
-const AddRepairForm = ({ isOpen, onClose, onSave }) => {
-  const [newRepair, setNewRepair] = useState({
-    repairTicketNumber: generateRepairID(),
-    paymentStatus: "Not Paid",
-    repairStatus: "Received",
-    customer: null, // Changed to be a nullable foreign key
-    customerName: "",
-    phoneNumber: "",
-    deviceType: "",
-    imei: "",
-    accessCode: "",
-    usePattern: false,
-    pattern: "",
-    simCode: "",
-    issueDescription: "",
-    priceEstimate: "",
-    repairTechnician: "",
-    dateReceived: new Date().toISOString().split("T")[0],
-    completionDate: "",
-    notes: "",
-    attachments: [],
-  });
-  const [modalError, setModalError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [attachmentPreviews, setAttachmentPreviews] = useState([]);
-  const [showPatternModal, setShowPatternModal] = useState(false);
+const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
+    const [newRepair, setNewRepair] = useState({
+        repairTicketNumber: generateRepairID(),
+        paymentStatus: "Not Paid",
+        repairStatus: "Received",
+        customer: null,
+        customerName: "",
+        phoneNumber: "",
+        deviceType: "",
+        imei: "",
+        accessCode: "",
+        usePattern: false,
+        pattern: "",
+        simCode: "",
+        issueDescription: "",
+        priceEstimate: "",
+        repairTechnician: "",
+        dateReceived: new Date().toISOString().split("T")[0],
+        completionDate: "",
+        notes: "",
+        attachments: [],
+    });
+     useEffect(() => {
+         if(defaultCustomer){
+             setNewRepair(prev => ({
+                  ...prev,
+                 customerName: defaultCustomer.companyName,
+                 phoneNumber: defaultCustomer.phone,
+             }));
+         }
+    }, [defaultCustomer])
+    const [modalError, setModalError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState({});
+    const [attachmentPreviews, setAttachmentPreviews] = useState([]);
+    const [showPatternModal, setShowPatternModal] = useState(false);
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showCustomerForm, setShowCustomerForm] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+     const [showDropdown, setShowDropdown] = useState(false);
+     const inputRef = useRef(null);
+     const [depositAmount, setDepositAmount] = useState("");
 
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                 const response = await axios.get('http://localhost:8000/api/customers/');
+                   setCustomers(response.data);
+              } catch (err) {
+                 console.error("Error fetching customers:", err);
+                 setError("Error loading customer. Please check console.")
+            } finally {
+                   setLoading(false);
+             }
+         };
+          fetchCustomers();
+          const handleClickOutside = (event) => {
+             if (inputRef.current && !inputRef.current.contains(event.target)) {
+                setShowDropdown(false);
+             }
+          };
+         document.addEventListener('mousedown', handleClickOutside);
+          return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
-  useEffect(() => {
-    const fetchCustomers = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-             const response = await axios.get('http://localhost:8000/api/customers/');
-               setCustomers(response.data);
-          } catch (err) {
-             console.error("Error fetching customers:", err);
-             setError("Error loading customer. Please check console.")
-        } finally {
-               setLoading(false);
-        }
-    };
-    fetchCustomers();
-  }, []);
 
    const handleSelectCustomer = (event) => {
-         const selectedCustomerId = event.target.value;
-
-            const selectedCustomer = customers.find(customer => customer.id === parseInt(selectedCustomerId));
-          if (selectedCustomer) {
-              setNewRepair(prev => ({...prev, customer: selectedCustomerId, customerName: selectedCustomer.companyName}));
-          } else {
-                setNewRepair(prev => ({...prev, customer: null, customerName: ""}));
+        const selectedCustomerId = event.target.value;
+         const selectedCustomer = customers.find(customer => customer.id === parseInt(selectedCustomerId));
+        if (selectedCustomer) {
+            setNewRepair(prev => ({...prev, customer: selectedCustomerId, customerName: selectedCustomer.companyName, phoneNumber: selectedCustomer.phone}));
+            setSearchTerm(`${selectedCustomer.companyName} - ${selectedCustomer.firstName} ${selectedCustomer.lastName}`)
+             setShowDropdown(false);
+        } else {
+             setNewRepair(prev => ({...prev, customer: null, customerName: "", phoneNumber: ""}));
           }
-   }
+   };
+    const handleAddCustomer = () => {
+      setShowCustomerForm(true);
+    };
+    const handleSaveNewCustomer = (customer) => {
+          setCustomers(prev => [...prev, customer])
+        setNewRepair(prev => ({...prev, customer: customer.id, customerName: customer.companyName, phoneNumber: customer.phone}));
+           setSearchTerm(`${customer.companyName} - ${customer.firstName} ${customer.lastName}`)
+           setShowDropdown(false);
+           setCustomerFormOpen(false);
+    };
+    const handleCancelCustomer = () => {
+        setShowCustomerForm(false);
+    };
   const handleInputChange = (e) => {
       const { name, value, type, checked } = e.target;
     let updatedValue = type === "checkbox" ? checked : value;
@@ -84,10 +120,27 @@ const AddRepairForm = ({ isOpen, onClose, onSave }) => {
       }
     }
 
-    setNewRepair((prev) => ({
-      ...prev,
-      [name]: updatedValue,
-    }));
+
+     if (name === "paymentStatus" && value === "Deposit") {
+             setNewRepair((prev) => ({ ...prev, [name]: value }));
+          } else if(name === "paymentStatus"){
+           setNewRepair((prev) => ({...prev, [name]: value }));
+          } else {
+            setNewRepair((prev) => ({
+                ...prev,
+                [name]: updatedValue,
+          }));
+           }
+
+      if(name === 'customerName') {
+              setSearchTerm(value)
+              setShowDropdown(true)
+             if(!value) {
+                setNewRepair(prev => ({...prev, customer: null}));
+             }
+          }
+
+
         if (name === "usePattern" && checked) {
             setShowPatternModal(true);
         } else if (name === "usePattern") {
@@ -135,17 +188,18 @@ const AddRepairForm = ({ isOpen, onClose, onSave }) => {
     });
   };
     const handleSubmit = async () => {
-        const requiredFields = ["customerName", "phoneNumber", "deviceType", "issueDescription", "customer"];
+         const requiredFields = ["deviceType", "issueDescription", "customer"];
         const errors = {};
         const phoneRegex = /^\d{10}$/;
-        requiredFields.forEach((field) => {
+
+         requiredFields.forEach((field) => {
             if (!newRepair[field]) {
-                 errors[field] = `${field.replace(/([A-Z])/g, " $1")} is required.`;
-            }
-       });
-        if (newRepair.phoneNumber && !phoneRegex.test(newRepair.phoneNumber)) {
-             errors.phoneNumber = "Phone number must be 10 digits.";
-       }
+                  errors[field] = `${field.replace(/([A-Z])/g, " $1")} is required.`;
+              }
+          });
+          if (newRepair.phoneNumber && !phoneRegex.test(newRepair.phoneNumber)) {
+              errors.phoneNumber = "Phone number must be 10 digits.";
+           }
       if (Object.keys(errors).length > 0) {
             setModalError("Please fill out all required fields before saving.");
             setFieldErrors(errors);
@@ -154,38 +208,73 @@ const AddRepairForm = ({ isOpen, onClose, onSave }) => {
         setModalError("");
         setFieldErrors({});
         // Call the onSave function (passed from NewRepairEntry) to add the repair
-         onSave(newRepair);
+           try {
+               const formData = new FormData();
+                for (const key in newRepair) {
+                    if(key !== "attachments" ){
+                       if(key === "paymentStatus" && newRepair[key] === "Deposit"){
+                            formData.append(key, `${newRepair[key]} ${depositAmount}` || "");
+                       } else {
+                          formData.append(key, newRepair[key] || "");
+                       }
+                    }
+                }
+                if (newRepair.attachments && newRepair.attachments.length > 0) {
+                  newRepair.attachments.forEach((file) => {
+                   formData.append("attachments", file);
+                 });
+                }
 
-        // Reset the form state
-        setNewRepair({
-            repairTicketNumber: generateRepairID(),
-            paymentStatus: "Not Paid",
-             repairStatus: "Received",
-            customer: null,
-            customerName: "",
-           phoneNumber: "",
-            deviceType: "",
-            imei: "",
-            accessCode: "",
-            usePattern: false, // Reset usePattern
-            pattern: "",
-            simCode: "",
-            issueDescription: "",
-             priceEstimate: "",
-            repairTechnician: "",
-            dateReceived: new Date().toISOString().split("T")[0],
-           completionDate: "",
-            notes: "",
-            attachments: [],
-          });
-        setAttachmentPreviews([]);
-        onClose(); // Close the modal
+                await axios.post('http://localhost:8000/api/repairs/', formData, {
+                  headers: { 'Content-Type': 'multipart/form-data' },
+                 });
+                onSave();
+             } catch (error) {
+                console.error("Error saving repair", error);
+                setModalError(`Error creating repair, check console: ${error.message}`);
+          } finally {
+              // Reset the form state
+           setNewRepair({
+                repairTicketNumber: generateRepairID(),
+                paymentStatus: "Not Paid",
+                 repairStatus: "Received",
+                customer: null,
+                customerName: "",
+               phoneNumber: "",
+                deviceType: "",
+                imei: "",
+                accessCode: "",
+                usePattern: false,
+                pattern: "",
+                simCode: "",
+                issueDescription: "",
+                 priceEstimate: "",
+                repairTechnician: "",
+                dateReceived: new Date().toISOString().split("T")[0],
+               completionDate: "",
+                notes: "",
+                attachments: [],
+           });
+            setAttachmentPreviews([]);
+           onClose(); // Close the modal
+       }
    };
 
     const handlePatternSelect = (pattern) => {
         setNewRepair(prev => ({...prev, pattern: pattern}));
       setShowPatternModal(false);
-  };
+    };
+      const  filteredCustomers = customers.filter(customer => {
+          return (customer.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()))
+     })
+
+     const renderCustomerOptions = () => {
+       return filteredCustomers.map(customer =>
+           <option value={customer.id} key={customer.id}>{customer.companyName} - {customer.firstName} {customer.lastName}  </option>
+        )
+     }
 
 
   if (!isOpen) return null;
@@ -204,26 +293,43 @@ const AddRepairForm = ({ isOpen, onClose, onSave }) => {
                 <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{modalError}</div>
               )}
               <div className="space-y-4">
-                 <div>
-                   <label className="block font-medium mb-1">Select Customer:</label>
-                        <select
-                            onChange={handleSelectCustomer}
-                             className={`border rounded p-2 w-full max-w-full ${
-                                  fieldErrors.customer ? "border-red-500" : ""
-                            }`}
-                            required
-                           >
-                            <option value="">Select Customer</option>
-                           {customers?.map((customer) => (
-                                <option value={customer.id} key={customer.id}>{customer.companyName}</option>
-                          ))}
-                        </select>
-                         {fieldErrors.customer && (
-                            <span className="text-red-500 text-sm">
-                               {fieldErrors.customer}
-                            </span>
-                         )}
-                </div>
+                   <div className="flex items-center mb-4" ref={inputRef}>
+                        <label className="block font-medium mb-1 mr-2">Select Customer:</label>
+                            <div className="relative w-full">
+                                  <input
+                                    type="text"
+                                     placeholder="Search by name"
+                                      value={searchTerm}
+                                    onChange={handleInputChange}
+                                   name="customerName"
+                                     onFocus={() => setShowDropdown(true)}
+                                    className={`border rounded p-2 w-full `}
+                                />
+                                  {showDropdown &&  (
+                                    <div
+                                        className="absolute z-10 w-full bg-white border border-gray-300 rounded mt-1 shadow-lg"
+                                        style={{ top: '100%'}}
+                                     >
+                                      <select
+                                         size={5}
+                                         onClick={handleSelectCustomer}
+                                         className="w-full p-2 customer-dropdown"
+                                     >
+                                         <option value="">Select Customer</option>
+                                         {renderCustomerOptions()}
+                                    </select>
+                             </div>
+                                  )}
+                            </div>
+                            <button
+                                type="button"
+                               onClick={handleAddCustomer}
+                              className="bg-blue-500 text-white px-4 py-2 rounded ml-2 "
+                              aria-label="Add Customer"
+                              >
+                                <UserPlus size={16}/>
+                            </button>
+                       </div>
                  {/* Customer Information */}
                  <div>
                   <h3 className="text-md font-semibold mb-2">Customer Information</h3>
@@ -235,16 +341,9 @@ const AddRepairForm = ({ isOpen, onClose, onSave }) => {
                              name="customerName"
                               value={newRepair.customerName}
                               onChange={handleInputChange}
-                              className={`border rounded p-2 w-full max-w-full ${
-                                fieldErrors.customerName ? "border-red-500" : ""
-                             }`}
-                             required
+                              className={`border rounded p-2 w-full max-w-full`}
+                               disabled
                              />
-                                {fieldErrors.customerName && (
-                                  <span className="text-red-500 text-sm">
-                                   {fieldErrors.customerName}
-                                  </span>
-                               )}
                         </div>
                        <div>
                              <label className="block font-medium mb-1">Phone Number:</label>
@@ -253,39 +352,32 @@ const AddRepairForm = ({ isOpen, onClose, onSave }) => {
                                 name="phoneNumber"
                                 value={newRepair.phoneNumber}
                                onChange={handleInputChange}
-                                className={`border rounded p-2 w-full max-w-full ${
-                                 fieldErrors.phoneNumber ? "border-red-500" : ""
-                              }`}
-                             required
+                                className={`border rounded p-2 w-full max-w-full`}
+                                 disabled
                             />
-                             {fieldErrors.phoneNumber && (
-                              <span className="text-red-500 text-sm">
-                                 {fieldErrors.phoneNumber}
-                            </span>
-                              )}
-                         </div>
+                        </div>
                    </div>
                  </div>
 
                 {/* Device Information */}
                 <div>
                     <h3 className="text-md font-semibold mb-2">Device Information</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                             <label className="block font-medium mb-1">Device Type:</label>
-                           <input
+                      <div className="grid grid-cols-2 gap-4">
+                         <div>
+                           <label className="block font-medium mb-1">Device Type:</label>
+                            <input
                                  type="text"
                                  name="deviceType"
-                                  value={newRepair.deviceType}
-                                  onChange={handleInputChange}
-                                   className={`border rounded p-2 w-full max-w-full ${
-                                      fieldErrors.deviceType ? "border-red-500" : ""
-                                    }`}
-                                   required
-                              />
-                               {fieldErrors.deviceType && (
-                                <span className="text-red-500 text-sm">{fieldErrors.deviceType}</span>
-                            )}
+                                 value={newRepair.deviceType}
+                                   onChange={handleInputChange}
+                                    className={`border rounded p-2 w-full max-w-full ${
+                                     fieldErrors.deviceType ? "border-red-500" : ""
+                                   }`}
+                                  required
+                             />
+                            {fieldErrors.deviceType && (
+                                  <span className="text-red-500 text-sm">{fieldErrors.deviceType}</span>
+                             )}
                        </div>
                          <div>
                            <label className="block font-medium mb-1">IMEI:</label>
@@ -301,7 +393,7 @@ const AddRepairForm = ({ isOpen, onClose, onSave }) => {
                </div>
 
                 {/* Security Codes */}
-               <div>
+                 <div>
                    <h3 className="text-md font-semibold mb-2">Security Codes</h3>
                      <div className="grid grid-cols-2 gap-4">
                          <div>
@@ -339,153 +431,219 @@ const AddRepairForm = ({ isOpen, onClose, onSave }) => {
                                   className="border rounded p-2 w-full max-w-full"
                             />
                          </div>
-                   </div>
-              </div>
-
-                {/* Repair Details */}
-                <div>
-                    <h3 className="text-md font-semibold mb-2">Repair Details</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                           <div>
-                               <label className="block font-medium mb-1">Price Estimate:</label>
-                                 <input
-                                     type="text"
-                                    name="priceEstimate"
-                                     value={newRepair.priceEstimate}
-                                    onChange={handleInputChange}
-                                    className="border rounded p-2 w-full max-w-full"
-                               />
-                            </div>
-                           <div>
-                             <label className="block font-medium mb-1">Repair Technician:</label>
-                              <input
-                                type="text"
-                                name="repairTechnician"
-                               value={newRepair.repairTechnician}
-                                  onChange={handleInputChange}
-                                   className="border rounded p-2 w-full max-w-full"
-                               />
-                            </div>
-                       </div>
+                    </div>
                  </div>
-
-                {/* Dates */}
+                 {/* Payment status */}
                   <div>
-                    <h3 className="text-md font-semibold mb-2">Dates</h3>
-                   <div className="grid grid-cols-2 gap-4">
+                    <h3 className="text-md font-semibold mb-2">Payment Status</h3>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                           <label className="block font-medium mb-1">
+                                 <input
+                                      type="radio"
+                                       name="paymentStatus"
+                                      value="Paid"
+                                      checked={newRepair.paymentStatus === "Paid"}
+                                     onChange={handleInputChange}
+                                       className="mr-2"
+                                    />
+                                    Paid
+                             </label>
+                        </div>
+                       <div>
+                         <label className="block font-medium mb-1">
+                            <input
+                                type="radio"
+                                 name="paymentStatus"
+                                value="Not Paid"
+                                 checked={newRepair.paymentStatus === "Not Paid"}
+                                onChange={handleInputChange}
+                               className="mr-2"
+                           />
+                            Not Paid
+                         </label>
+                       </div>
+                      <div>
+                            <label className="block font-medium mb-1">
+                                   <input
+                                    type="radio"
+                                    name="paymentStatus"
+                                    value="Deposit"
+                                    checked={newRepair.paymentStatus.startsWith("Deposit")}
+                                    onChange={handleInputChange}
+                                      className="mr-2"
+                                />
+                                   Deposit
+                            </label>
+                             {newRepair.paymentStatus === "Deposit" && (
+                                    <input
+                                        type="number"
+                                      value={depositAmount}
+                                         onChange={(e) => setDepositAmount(e.target.value)}
+                                     placeholder="Amount"
+                                        className="border rounded p-2 w-full max-w-[150px] ml-2"
+                                    />
+                               )}
+                       </div>
+                    </div>
+                   </div>
+
+                  {/* Repair Details */}
+                  <div>
+                      <h3 className="text-md font-semibold mb-2">Repair Details</h3>
+                      <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block font-medium mb-1">Date Received:</label>
-                               <input
-                                type="date"
-                               name="dateReceived"
-                               value={newRepair.dateReceived}
-                                 onChange={handleInputChange}
-                                 className="border rounded p-2 w-full max-w-full"
-                              />
-                           </div>
-                            <div>
-                             <label className="block font-medium mb-1">Completion Date:</label>
-                               <input
-                                 type="date"
-                                 name="completionDate"
-                                 value={newRepair.completionDate}
+                              <label className="block font-medium mb-1">Price Estimate:</label>
+                              <input
+                                  type="text"
+                                  name="priceEstimate"
+                                  value={newRepair.priceEstimate}
                                   onChange={handleInputChange}
-                                 className="border rounded p-2 w-full max-w-full"
+                                  className="border rounded p-2 w-full max-w-full"
                               />
-                           </div>
+                          </div>
+                          <div>
+                              <label className="block font-medium mb-1">Repair Technician:</label>
+                              <input
+                                  type="text"
+                                  name="repairTechnician"
+                                  value={newRepair.repairTechnician}
+                                  onChange={handleInputChange}
+                                  className="border rounded p-2 w-full max-w-full"
+                              />
+                          </div>
                       </div>
-                 </div>
+                  </div>
+
+                  {/* Dates */}
+                  <div>
+                      <h3 className="text-md font-semibold mb-2">Dates</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                          <div>
+                              <label className="block font-medium mb-1">Date Received:</label>
+                              <input
+                                  type="date"
+                                  name="dateReceived"
+                                  value={newRepair.dateReceived}
+                                  onChange={handleInputChange}
+                                  className="border rounded p-2 w-full max-w-full"
+                              />
+                          </div>
+                          <div>
+                              <label className="block font-medium mb-1">Completion Date:</label>
+                              <input
+                                  type="date"
+                                  name="completionDate"
+                                  value={newRepair.completionDate}
+                                  onChange={handleInputChange}
+                                  className="border rounded p-2 w-full max-w-full"
+                              />
+                          </div>
+                      </div>
+                  </div>
 
                   {/* Full Width Fields */}
                   <div>
-                    <label className="block font-medium mb-1">Issue Description:</label>
-                       <textarea
-                            name="issueDescription"
-                            value={newRepair.issueDescription}
-                            onChange={handleInputChange}
-                             className={`border rounded p-2 w-full max-w-full ${
-                                fieldErrors.issueDescription ? "border-red-500" : ""
-                             }`}
-                            required
-                           rows={3}
-                           />
-                            {fieldErrors.issueDescription && (
-                            <span className="text-red-500 text-sm">{fieldErrors.issueDescription}</span>
-                          )}
-                 </div>
-                  <div>
-                   <label className="block font-medium mb-1">Notes:</label>
-                     <textarea
+                      <label className="block font-medium mb-1">Issue Description:</label>
+                      <textarea
+                          name="issueDescription"
+                          value={newRepair.issueDescription}
+                          onChange={handleInputChange}
+                          className={`border rounded p-2 w-full max-w-full ${
+                              fieldErrors.issueDescription ? "border-red-500" : ""
+                          }`}
+                          required
+                          rows={3}
+                      />
+                        {fieldErrors.issueDescription && (
+                         <span className="text-red-500 text-sm">{fieldErrors.issueDescription}</span>
+                      )}
+                </div>
+                 <div>
+                      <label className="block font-medium mb-1">Notes:</label>
+                      <textarea
                             name="notes"
-                           value={newRepair.notes}
-                           onChange={handleInputChange}
+                            value={newRepair.notes}
+                            onChange={handleInputChange}
                             className="border rounded p-2 w-full max-w-full"
-                             rows={3}
-                        />
-                     </div>
+                            rows={3}
+                      />
+                  </div>
                   {/* Attachments */}
                    <div>
-                     <label className="block font-medium mb-1">Attachments:</label>
-                       <input
-                          type="file"
+                      <label className="block font-medium mb-1">Attachments:</label>
+                        <input
+                            type="file"
                             onChange={handleAttachmentChange}
                             className="border rounded p-2 w-full max-w-full"
-                             multiple
-                       />
-                      {attachmentPreviews && (
-                        <div className="mt-2 grid grid-cols-3 gap-2">
-                         {attachmentPreviews.map((preview, index) => (
-                             <div key={index} className="relative">
-                               {preview.type.startsWith("image/") ? (
-                                   <div className="relative">
-                                       <img
-                                        src={preview.url}
-                                       alt={`Preview ${index + 1}`}
-                                          className="max-w-full mt-2 border rounded"
-                                        />
-                                       <button
-                                            onClick={() => handleRemoveAttachment(index)}
-                                           className="absolute top-0 right-0 bg-gray-500 text-white rounded-full p-1"
-                                         >
+                            multiple
+                        />
+                         {attachmentPreviews && (
+                            <div className="mt-2 grid grid-cols-3 gap-2">
+                               {attachmentPreviews.map((preview, index) => (
+                                 <div key={index} className="relative">
+                                       {preview.type.startsWith("image/") ? (
+                                            <div className="relative">
+                                              <img
+                                                  src={preview.url}
+                                               alt={`Preview ${index + 1}`}
+                                                className="max-w-full mt-2 border rounded"
+                                            />
+                                             <button
+                                                 onClick={() => handleRemoveAttachment(index)}
+                                                  className="absolute top-0 right-0 bg-gray-500 text-white rounded-full p-1"
+                                               >
+                                                   <XCircle size={16} />
+                                              </button>
+                                        </div>
+                                     ) : (
+                                        <div className="mt-2 p-2 border rounded flex items-center justify-between">
+                                          <FileText className="inline-block mr-2" />
+                                         <span className="truncate">{preview.name}</span>
+                                          <button
+                                             onClick={() => handleRemoveAttachment(index)}
+                                           className="bg-gray-500 text-white rounded-full p-1"
+                                        >
                                            <XCircle size={16} />
                                        </button>
-                                     </div>
-                                   ) : (
-                                       <div className="mt-2 p-2 border rounded flex items-center justify-between">
-                                        <FileText className="inline-block mr-2" />
-                                           <span className="truncate">{preview.name}</span>
-                                           <button
-                                                onClick={() => handleRemoveAttachment(index)}
-                                               className="bg-gray-500 text-white rounded-full p-1"
-                                           >
-                                              <XCircle size={16} />
-                                          </button>
-                                     </div>
+                                   </div>
                                   )}
-                            </div>
-                          ))}
-                      </div>
-                   )}
-                </div>
-            </div>
-            <div className="flex justify-end space-x-2 mt-6">
-                 <button onClick={handleSubmit} className="bg-blue-500 text-white px-4 py-2 rounded" >
+                           </div>
+                            ))}
+                       </div>
+                     )}
+                  </div>
+              </div>
+
+             <div className="flex justify-end space-x-2 mt-6">
+                 <button onClick={handleSubmit} className="bg-blue-500 text-white px-4 py-2 rounded">
                     Save Repair
-                </button>
-               <button onClick={onClose} className="bg-gray-500 text-white px-4 py-2 rounded">
-                 Cancel
-                </button>
-           </div>
-           {showPatternModal && (
-            <PatternModal
-                isOpen={showPatternModal}
-              onClose={() => setShowPatternModal(false)}
-               onPatternSelect={handlePatternSelect}
-            />
-        )}
+                  </button>
+                 <button onClick={onClose} className="bg-gray-500 text-white px-4 py-2 rounded">
+                    Cancel
+                  </button>
+            </div>
+          {showPatternModal && (
+              <PatternModal
+                  isOpen={showPatternModal}
+                  onClose={() => setShowPatternModal(false)}
+                  onPatternSelect={handlePatternSelect}
+             />
+         )}
+        {showCustomerForm && (
+                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white p-6 rounded-lg  w-[calc(100%-64px)] max-h-[90vh] overflow-y-auto">
+                            <CustomerForm
+                                  onSave={handleSaveNewCustomer}
+                                    onCancel={handleCancelCustomer}
+                                />
+                         <button onClick={handleCancelCustomer} className="bg-gray-500 text-white px-4 py-2 rounded mt-4">Cancel</button>
+                     </div>
+              </div>
+             )}
         </div>
       </div>
-    );
+  );
 };
 
 export default AddRepairForm;

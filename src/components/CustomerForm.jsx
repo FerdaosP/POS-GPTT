@@ -70,15 +70,15 @@ const CustomerForm = ({ onSave, onCancel }) => {
             if(customerId){
                 const response = await axios.put(`http://localhost:8000/api/customers/${customerId}/`, form);
                  if(response.status === 200){
-                    navigate('/customers');
+                      onSave(form);
                 }
             } else {
                 const response = await axios.post('http://localhost:8000/api/customers/', form);
                 if (response.status === 201) {
-                     navigate('/customers');
+                     onSave(response.data);
                 }
             }
-            onSave(form);
+           
         } catch (err) {
             console.error("Error saving customer", err);
         } finally {
@@ -87,13 +87,13 @@ const CustomerForm = ({ onSave, onCancel }) => {
     };
 
   const handleCancel = () => {
-        navigate('/customers');
-    };
+    onCancel(); // Call the onCancel prop instead of navigating
+  };
 
 
     return (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded shadow-lg w-1/2">
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded shadow-lg w-1/2"  style={{zIndex: 101}}>
                 <h2 className="text-lg font-bold mb-4">
                     {customerId ? "Edit Customer" : "Add Customer"}
                 </h2>

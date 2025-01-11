@@ -1,0 +1,211 @@
+/* src/pos/POS.css */
+
+.pos-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    font-family: sans-serif;
+    background: #f0f0f0;
+}
+
+.pos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f0f0f0;
+    border-bottom: 1px solid #ddd;
+}
+
+.pos-tabs {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.pos-tab {
+    padding: 7px 10px;
+    background: #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.pos-tab:hover {
+    background: #ccc;
+}
+
+.pos-tab.active {
+    background: #aaa;
+    color: white;
+}
+
+.pos-search {
+    display: flex;
+    align-items: center;
+}
+
+.search-bar {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.filter-button {
+    background: #ddd;
+    padding: 7px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.filter-button:hover {
+    background: #ccc;
+}
+
+.pos-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden; /* Hidden overflow to make sure components stay within bounds */
+}
+
+.pos-items-panel {
+    width: 350px;
+    padding: 20px;
+    overflow-y: auto;
+    border-right: 1px solid #ddd;
+}
+
+.pos-transaction-panel {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.pos-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+.pos-item:hover {
+    background: #f8f8f8;
+}
+
+.item-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-price {
+    font-weight: 500;
+}
+
+.transaction-actions {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 10px;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.pos-action-button {
+    padding: 10px;
+    background-color: #ddd;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+}
+
+.pos-action-button:hover {
+    background-color: #ccc;
+}
+
+.transaction-items {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.transaction-summary {
+    padding: 10px 0px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: right;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.pos-payment-button {
+    margin-top: auto;
+}
+
+.pos-payment-button button {
+    background-color: #b71c1c;
+    color: white;
+    border: none;
+    padding: 12px 10px;
+    text-align: center;
+    width: 100%;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.pos-payment-button button:hover {
+    background-color: #b71c1c;
+    filter: brightness(0.9);
+}
+
+.customer-dropdown {
+    position: absolute;
+    z-index: 100;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    top: 100%;
+    margin-top: 0.2rem;
+    border: 1px solid #ddd;
+}
+
+.customer-dropdown select {
+    border: none;
+    border-radius: 4px;
+}
+
+.customer-dropdown option:hover {
+    background-color: #ddd;
+}
+
+/* Grid Layout for Category Buttons */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Adjust minmax values as needed */
+    gap: 8px; /* Space between buttons */
+    margin-bottom: 16px; /* Space below the grid */
+}
+
+.category-button {
+    width: 100%; /* Ensure buttons take full width of the grid cell */
+    text-align: center; /* Center text inside buttons */
+    padding: 10px; /* Add padding for better spacing */
+    background-color: #ddd; /* Default background color */
+    border: none; /* Remove border */
+    border-radius: 4px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor on hover */
+}
+
+.category-button:hover {
+    background-color: #ccc; /* Hover background color */
+}
+
+.category-button.active {
+    background-color: #aaa; /* Active background color */
+    color: white; /* Active text color */
+}
