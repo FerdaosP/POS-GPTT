@@ -383,7 +383,7 @@ const InventoryEntry = () => {
                 inventory={paginatedItems}
                 onPageChange={setCurrentPage}
                 onDelete={confirmDeleteItem}
-                onEdit={handleEdit}
+                onEditItem={handleEdit}
                 onSort={handleSort}
             />
 
