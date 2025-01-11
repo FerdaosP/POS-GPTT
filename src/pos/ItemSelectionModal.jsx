@@ -21,7 +21,7 @@ const ItemSelectionModal = ({ isOpen, onClose, onItemSelect, items = [] }) => {
             setError(null);
             try {
                 const response = await axios.get('http://localhost:8000/api/services/category/');
-                setCategories(response.data);
+                 setCategories(JSON.parse(JSON.stringify(response.data)).map(item => ({id: item.category, name: item.category })));
             } catch (err) {
                 console.error("Error fetching Categories", err);
                 setError("Error fetching categories. Check the console");
@@ -86,12 +86,22 @@ const ItemSelectionModal = ({ isOpen, onClose, onItemSelect, items = [] }) => {
         setShowCategoryForm(false);
     };
 
-    const handleSaveCategory = (category) => {
-        setCategories(prev => [...prev, category]);
-        setSelectedCategory(category.name);
-        setShowCategoryForm(false);
-    };
+    const handleSaveCategory = async (category) => {
+          try {
+                 await fetchCategories();
+              setSelectedCategory(category.name);
+               showNotification("Category created succesfully")
+                 setShowCategoryForm(false);
+            } catch (err) {
+                 console.error("Error creating category", err)
+                   showNotification("Error creating category! Check the console", "error");
+             }
 
+    };
+    const showNotification = (message, type = "success") => {
+        // setNotification({ message, type });
+        // setTimeout(() => setNotification(null), 3000);
+    };
     const handleShowAllItems = () => {
         setSelectedCategory(""); // Reset selected category to show all items
     };

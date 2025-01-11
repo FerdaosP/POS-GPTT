@@ -11,7 +11,7 @@ import ViewAttachmentsModal from "../reparatiekaart/ViewAttachmentsModal";
 import RepairHistoryModal from "../reparatiekaart/RepairHistoryModal";
 import { generateRepairID } from "../reparatiekaart/utils";
 import RepairTicketPrint from "../reparatiekaart/RepairTicketPrint";
-import ItemForm from "./ItemForm"
+import ItemForm from "./ItemForm";
 import InventoryList from "./InventoryList";
 import CategoryForm from "./CategoryForm";
 
@@ -31,29 +31,29 @@ const InventoryEntry = () => {
     const [sortDirection, setSortDirection] = useState("asc");
     const [editItem, setEditItem] = useState(null);
     const [deleteItemId, setDeleteItemId] = useState(null);
-    const [selectedItems, setSelectedItems] = useState([]); // Added selectedRepairs state
+    const [selectedItems, setSelectedItems] = useState([]);
     const [showCategoryForm, setShowCategoryForm] = useState(false);
-   const [categories, setCategories] = useState([]);
+    const [categories, setCategories] = useState([]);
 
-
-   const apiUrl = 'http://localhost:8000/api/products/';
-    const categoryUrl = 'http://localhost:8000/api/services/category/'
+    const apiUrl = 'http://localhost:8000/api/products/';
+    const categoryUrl = 'http://localhost:8000/api/service-categories/';
 
     useEffect(() => {
         fetchInventory();
-         fetchCategories();
+        fetchCategories();
     }, []);
-     const fetchCategories = async () => {
-      try{
+
+    const fetchCategories = async () => {
+        try {
             const response = await axios.get(categoryUrl);
-             setCategories(JSON.parse(JSON.stringify(response.data)))
-         } catch (error) {
-          console.error("Error fetching categories", error);
+            setCategories(response.data);
+        } catch (error) {
+            console.error("Error fetching categories:", error);
+            showNotification("Error fetching categories! Check the console.", "error");
         }
     };
 
-
-     const fetchInventory = async () => {
+    const fetchInventory = async () => {
         try {
             const response = await axios.get(apiUrl);
             setInventory(JSON.parse(JSON.stringify(response.data)));
@@ -68,21 +68,20 @@ const InventoryEntry = () => {
         setTimeout(() => setNotification(null), 3000);
     };
 
-   const handleAddItem = async (newItemData) => {
-          setIsLoadingAddItem(true);
-          try {
+    const handleAddItem = async (newItemData) => {
+        setIsLoadingAddItem(true);
+        try {
             await axios.post(apiUrl, newItemData);
             fetchInventory();
             showNotification("Item added successfully!");
             setShowAddItemModal(false);
-         } catch (error) {
-             console.error("Error adding item:", error);
-             showNotification("Error adding item!", "error");
-         } finally {
-             setIsLoadingAddItem(false);
-          }
-      };
-
+        } catch (error) {
+            console.error("Error adding item:", error);
+            showNotification("Error adding item!", "error");
+        } finally {
+            setIsLoadingAddItem(false);
+        }
+    };
 
     const handleEdit = (item) => {
         setEditItem({ ...item });
@@ -92,17 +91,16 @@ const InventoryEntry = () => {
         setIsLoadingUpdate(true);
         try {
             await axios.put(`${apiUrl}${updatedItem.sku}/`, updatedItem);
-           fetchInventory();
+            fetchInventory();
             showNotification("Item updated successfully!");
             setEditItem(null);
         } catch (error) {
-              console.error("Error updating item:", error);
+            console.error("Error updating item:", error);
             showNotification("Error updating item!", "error");
         } finally {
             setIsLoadingUpdate(false);
         }
     };
-
 
     const confirmDeleteItem = (itemId) => {
         setDeleteItemId(itemId);
@@ -111,7 +109,7 @@ const InventoryEntry = () => {
     const handleDeleteItem = async (itemId) => {
         setIsLoadingDelete(true);
         try {
-           await axios.delete(`${apiUrl}${itemId}/`);
+            await axios.delete(`${apiUrl}${itemId}/`);
             fetchInventory();
             showNotification("Item deleted successfully!");
             setDeleteItemId(null);
@@ -122,6 +120,7 @@ const InventoryEntry = () => {
             setIsLoadingDelete(false);
         }
     };
+
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
         setCurrentPage(1);
@@ -129,8 +128,8 @@ const InventoryEntry = () => {
 
     const handleFilterCategory = (e) => {
         setFilterCategory(e.target.value);
-         setCurrentPage(1);
-   };
+        setCurrentPage(1);
+    };
 
     const handleSort = (column) => {
         if (column === sortColumn) {
@@ -141,54 +140,52 @@ const InventoryEntry = () => {
         }
     };
 
-
-   const handleExport = async (format) => {
+    const handleExport = async (format) => {
         setIsLoadingExport(true);
         try {
-             await new Promise((resolve) => setTimeout(resolve, 1000));
-                const itemsToExport = inventory.filter(item => selectedItems.includes(item.sku));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            const itemsToExport = inventory.filter(item => selectedItems.includes(item.sku));
 
-            if(itemsToExport.length === 0){
-                 showNotification("No items selected for export!", "error");
-                 return;
-                }
-                switch (format) {
-                   case 'csv':
-                        exportToCSV(itemsToExport);
-                      break;
-                  case 'pdf':
-                        exportToPDF(itemsToExport);
-                         break;
-                   default:
-                        showNotification(`Error exporting to ${format.toUpperCase()}!`, "error");
-                  }
+            if (itemsToExport.length === 0) {
+                showNotification("No items selected for export!", "error");
+                return;
+            }
+            switch (format) {
+                case 'csv':
+                    exportToCSV(itemsToExport);
+                    break;
+                case 'pdf':
+                    exportToPDF(itemsToExport);
+                    break;
+                default:
+                    showNotification(`Error exporting to ${format.toUpperCase()}!`, "error");
+            }
             showNotification(`Export to ${format.toUpperCase()} completed!`);
-
         } catch (error) {
             showNotification(`Error exporting to ${format.toUpperCase()}!`, "error");
         } finally {
-             setIsLoadingExport(false);
-         }
+            setIsLoadingExport(false);
+        }
     };
 
     const exportToCSV = (itemsToExport) => {
         const csvContent = [
             [
                 "SKU",
-                 "Name",
-                 "Description",
-                 "Price",
-                 "Quantity On Hand",
+                "Name",
+                "Description",
+                "Price",
+                "Quantity On Hand",
                 "Category"
             ].join(","),
             ...itemsToExport.map((item) =>
                 [
-                  item.sku,
-                   item.name,
-                     item.description,
+                    item.sku,
+                    item.name,
+                    item.description,
                     item.price,
-                   item.quantity_on_hand,
-                     item.category,
+                    item.quantity_on_hand,
+                    item.category,
                 ].join(",")
             ),
         ].join("\n");
@@ -199,58 +196,57 @@ const InventoryEntry = () => {
         link.href = url;
         link.download = "inventory.csv";
         link.click();
-        showNotification('CSV export completed')
+        showNotification('CSV export completed');
     };
 
-
-   const exportToPDF = (itemsToExport) => {
+    const exportToPDF = (itemsToExport) => {
         const doc = new jsPDF();
         const tableColumn = [
             "SKU",
-             "Name",
+            "Name",
             "Description",
-             "Price",
-              "Quantity On Hand",
-             "Category"
+            "Price",
+            "Quantity On Hand",
+            "Category"
         ];
 
         const tableRows = itemsToExport.map(item => [
-          item.sku,
-           item.name,
-           item.description,
-           item.price,
-           item.quantity_on_hand,
-           item.category,
+            item.sku,
+            item.name,
+            item.description,
+            item.price,
+            item.quantity_on_hand,
+            item.category,
         ]);
 
         doc.autoTable({
-          head: [tableColumn],
-          body: tableRows,
-           startY: 20,
+            head: [tableColumn],
+            body: tableRows,
+            startY: 20,
         });
 
         doc.save('inventory.pdf');
-        showNotification('PDF export completed')
+        showNotification('PDF export completed');
     };
 
-
-
-   const handleSelectRepair = (itemId, isSelected) => {
-      if (isSelected) {
-        setSelectedItems(prev => [...prev, itemId]);
-      } else {
-         setSelectedItems(prev => prev.filter(id => id !== itemId));
-      }
-  };
-
-   const handleOpenAddItemModal = () => {
-       setEditItem(null)
-         setShowAddItemModal(true);
+    const handleSelectRepair = (itemId, isSelected) => {
+        if (isSelected) {
+            setSelectedItems(prev => [...prev, itemId]);
+        } else {
+            setSelectedItems(prev => prev.filter(id => id !== itemId));
+        }
     };
-  const handleCloseAddItemModal = () => {
+
+    const handleOpenAddItemModal = () => {
+        setEditItem(null);
+        setShowAddItemModal(true);
+    };
+
+    const handleCloseAddItemModal = () => {
         setShowAddItemModal(false);
-   };
-     const handleOpenCategoryForm = () => {
+    };
+
+    const handleOpenCategoryForm = () => {
         setShowCategoryForm(true);
     };
 
@@ -258,41 +254,46 @@ const InventoryEntry = () => {
         setShowCategoryForm(false);
     };
 
-     const handleSaveCategory = (category) => {
-          setCategories(prev => [...prev, category])
-           setShowCategoryForm(false);
-    }
+    const handleSaveCategory = async (category) => {
+        try {
+            await fetchCategories(); // Refresh the category list
+            showNotification("Category created successfully!");
+            setShowCategoryForm(false);
+        } catch (err) {
+            console.error("Error creating category:", err);
+            showNotification("Error creating category! Check the console.", "error");
+        }
+    };
 
     const filteredItems = inventory.filter((item) => {
         return (
-           (item.name
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-                item.sku
-                    .toLowerCase()
-                    .includes(searchTerm.toLowerCase())
+            (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.sku.toLowerCase().includes(searchTerm.toLowerCase())
             ) &&
-          (filterCategory === "" || item.category === filterCategory)
+            (filterCategory === "" || item.category === filterCategory)
         );
     });
-      const sortedItems = [...filteredItems].sort((a, b) => {
+
+    const sortedItems = [...filteredItems].sort((a, b) => {
         const aValue = a[sortColumn];
         const bValue = b[sortColumn];
         if (aValue < bValue) {
-          return sortDirection === "asc" ? -1 : 1;
-         }
-         if (aValue > bValue) {
-           return sortDirection === "asc" ? 1 : -1;
+            return sortDirection === "asc" ? -1 : 1;
         }
-          return 0;
-     });
+        if (aValue > bValue) {
+            return sortDirection === "asc" ? 1 : -1;
+        }
+        return 0;
+    });
+
     const paginatedItems = sortedItems.slice(
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
-   );
+    );
+
     return (
         <div className="p-4 relative">
-           {(isLoadingAddItem || isLoadingDelete || isLoadingUpdate || isLoadingExport ) && (
+            {(isLoadingAddItem || isLoadingDelete || isLoadingUpdate || isLoadingExport) && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white p-4 rounded-lg flex items-center space-x-2">
                         <Loading className="animate-spin" isLoading={true} />
@@ -305,12 +306,12 @@ const InventoryEntry = () => {
                 <Alert className={`mb-4 ${notification.type === 'error' ? 'bg-red-50' : 'bg-green-50'}`}>
                     <AlertCircle className={notification.type === 'error' ? 'text-red-500' : 'text-green-500'} />
                     <AlertDescription>{notification.message}</AlertDescription>
-                 </Alert>
+                </Alert>
             )}
 
             <h1 className="text-2xl font-bold mb-4">Inventory</h1>
 
-           {/* Search and Filter */}
+            {/* Search and Filter */}
             <div className="flex mb-4">
                 <input
                     type="text"
@@ -320,17 +321,17 @@ const InventoryEntry = () => {
                     className="border p-2 mr-2 rounded w-full"
                     aria-label="Search items"
                 />
-               <select
-                   value={filterCategory}
-                   onChange={handleFilterCategory}
-                   className="border p-2 rounded"
-                 aria-label="Filter by category"
-               >
-                   <option value="">All Categories</option>
+                <select
+                    value={filterCategory}
+                    onChange={handleFilterCategory}
+                    className="border p-2 rounded"
+                    aria-label="Filter by category"
+                >
+                    <option value="">All Categories</option>
                     {categories.map((category) => (
                         <option key={category.id} value={category.name}>{category.name}</option>
                     ))}
-               </select>
+                </select>
             </div>
 
             {/* Pagination Info */}
@@ -338,119 +339,120 @@ const InventoryEntry = () => {
                 <span className="text-sm text-gray-600">
                     Showing page {currentPage} of {Math.ceil(sortedItems.length / itemsPerPage)}
                     ({sortedItems.length} total records)
-                 </span>
+                </span>
             </div>
 
             {/* Repair List */}
-             <InventoryList
+            <InventoryList
                 inventory={paginatedItems}
                 onPageChange={setCurrentPage}
                 onDelete={confirmDeleteItem}
                 onEdit={handleEdit}
-                 onSort={handleSort}
+                onSort={handleSort}
             />
 
-           {/* Export Buttons */}
+            {/* Export Buttons */}
             <div className="flex justify-between items-center mb-4">
-                 <div className="flex space-x-2">
+                <div className="flex space-x-2">
                     <button
                         onClick={() => handleExport("csv")}
-                         className="bg-blue-500 text-white px-4 py-2 rounded flex items-center space-x-2"
+                        className="bg-blue-500 text-white px-4 py-2 rounded flex items-center space-x-2"
                         aria-label="Export to CSV"
                     >
                         <Download size={16} />
-                       <span>CSV</span>
-                   </button>
-                   <button
-                       onClick={() => handleExport("pdf")}
+                        <span>CSV</span>
+                    </button>
+                    <button
+                        onClick={() => handleExport("pdf")}
                         className="bg-red-500 text-white px-4 py-2 rounded flex items-center space-x-2"
                         aria-label="Export to PDF"
-                     >
+                    >
                         <File size={16} />
-                         <span>PDF</span>
-                   </button>
-               </div>
-                {/* Pagination Controls */}
-               <div className="flex space-x-2">
-                    <button
-                       onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                         disabled={currentPage === 1}
-                         className="bg-gray-200 text-gray-700 px-4 py-2 rounded disabled:opacity-50"
-                         aria-label="Previous Page"
-                     >
-                       Previous
+                        <span>PDF</span>
                     </button>
-                   <button
+                </div>
+                {/* Pagination Controls */}
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded disabled:opacity-50"
+                        aria-label="Previous Page"
+                    >
+                        Previous
+                    </button>
+                    <button
                         onClick={() =>
-                           setCurrentPage((prev) =>
-                              Math.min(
-                                  prev + 1,
-                                   Math.ceil(sortedItems.length / itemsPerPage)
-                                 )
+                            setCurrentPage((prev) =>
+                                Math.min(
+                                    prev + 1,
+                                    Math.ceil(sortedItems.length / itemsPerPage)
+                                )
                             )
-                         }
+                        }
                         disabled={currentPage >= Math.ceil(sortedItems.length / itemsPerPage)}
-                       className="bg-gray-200 text-gray-700 px-4 py-2 rounded disabled:opacity-50"
-                       aria-label="Next Page"
+                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded disabled:opacity-50"
+                        aria-label="Next Page"
                     >
-                       Next
-                   </button>
-               </div>
-         </div>
-            {/* Add Repair Button */}
-           <div className="flex items-center mb-4 space-x-2">
-                <button
-                  onClick={handleOpenAddItemModal}
-                   className="bg-green-500 text-white px-4 py-2 rounded"
-                    aria-label="Add New Item"
-            >
-                    Add Item
-              </button>
-               <button
-                 onClick={handleOpenCategoryForm}
-                    className="bg-blue-500 text-white px-4 py-2 rounded"
-                      aria-label="Add Category"
-                    >
-                        Add Category
-                 </button>
-           </div>
+                        Next
+                    </button>
+                </div>
+            </div>
 
+            {/* Add Repair Button */}
+            <div className="flex items-center mb-4 space-x-2">
+                <button
+                    onClick={handleOpenAddItemModal}
+                    className="bg-green-500 text-white px-4 py-2 rounded"
+                    aria-label="Add New Item"
+                >
+                    Add Item
+                </button>
+                <button
+                    onClick={handleOpenCategoryForm}
+                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                    aria-label="Add Category"
+                >
+                    Add Category
+                </button>
+            </div>
 
             {/* Modals */}
-              {showAddItemModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white p-6 rounded-lg w-[calc(100%-64px)] max-h-[90vh] overflow-y-auto">
-                            <h2 className="text-xl font-semibold mb-4">
-                                {editItem ? "Edit Item" : "Add Item"}
-                             </h2>
-                                 <ItemForm
-                                   onSave={handleAddItem}
-                                     onClose={handleCloseAddItemModal}
-                                      initialItem={editItem}
-                                    />
-                                <button onClick={handleCloseAddItemModal} className="bg-gray-500 text-white px-4 py-2 rounded mt-4">Cancel</button>
-                           </div>
+            {showAddItemModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg w-[calc(100%-64px)] max-h-[90vh] overflow-y-auto">
+                        <h2 className="text-xl font-semibold mb-4">
+                            {editItem ? "Edit Item" : "Add Item"}
+                        </h2>
+                        <ItemForm
+                            onSave={handleAddItem}
+                            onClose={handleCloseAddItemModal}
+                            initialItem={editItem}
+                        />
+                        <button onClick={handleCloseAddItemModal} className="bg-gray-500 text-white px-4 py-2 rounded mt-4">Cancel</button>
                     </div>
-               )}
-               <DeleteConfirmationModal
+                </div>
+            )}
+            <DeleteConfirmationModal
                 isOpen={!!deleteItemId}
                 onClose={() => setDeleteItemId(null)}
                 onConfirm={() => handleDeleteItem(deleteItemId)}
-                 repairId={deleteItemId}
-                />
-              {showCategoryForm && (
-                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                     <div className="bg-white p-6 rounded-lg  w-[calc(100%-64px)] max-h-[90vh] overflow-y-auto">
-                         <h2 className="text-xl font-semibold mb-4">Create New Category</h2>
+                repairId={deleteItemId}
+            />
+            {showCategoryForm && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg w-[calc(100%-64px)] max-h-[90vh] overflow-y-auto">
+                        <h2 className="text-xl font-semibold mb-4">Create New Category</h2>
                         <CategoryForm
-                              onSave={handleSaveCategory}
-                              onClose={handleCancelCategoryForm}
-                           />
-                            <button onClick={handleCancelCategoryForm} className="bg-gray-500 text-white px-4 py-2 rounded mt-4">Cancel</button>
-                      </div>
-              </div>
-        )}
+                            onSave={handleSaveCategory}
+                            onClose={handleCancelCategoryForm}
+                        />
+                        <button onClick={handleCancelCategoryForm} className="bg-gray-500 text-white px-4 py-2 rounded mt-4">Cancel</button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
+
 export default InventoryEntry;
