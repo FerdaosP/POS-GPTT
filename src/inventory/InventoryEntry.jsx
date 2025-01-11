@@ -4,7 +4,7 @@ import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import axios from 'axios';
 
-import Alert, { AlertDescription } from "@/reparatiekaart/alert";
+import Alert, { AlertDescription } from "../reparatiekaart/Alert";
 import Loading from "../reparatiekaart/Loading";
 import DeleteConfirmationModal from "../reparatiekaart/DeleteConfirmationModal";
 import ViewAttachmentsModal from "../reparatiekaart/ViewAttachmentsModal";
