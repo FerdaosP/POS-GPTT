@@ -15,7 +15,8 @@ const InventoryList = ({ inventory = [], onEditItem, onDeleteItem }) => {
                                 <th className="cursor-pointer py-2 px-4">Name</th>
                                 <th className="cursor-pointer py-2 px-4">Description</th>
                                 <th className="cursor-pointer py-2 px-4">Price</th>
-                                <th className="cursor-pointer py-2 px-4">Quantity</th>
+                                 <th className="cursor-pointer py-2 px-4">Quantity</th>
+                                 <th className="cursor-pointer py-2 px-4">Category</th>
                                 <th className="py-2 px-4">Actions</th>
                             </tr>
                         </thead>
@@ -27,6 +28,7 @@ const InventoryList = ({ inventory = [], onEditItem, onDeleteItem }) => {
                                     <td className="border px-4 py-2">{item.description}</td>
                                     <td className="border px-4 py-2">€{item.price}</td>
                                     <td className="border px-4 py-2">{item.quantity_on_hand}</td>
+                                    <td className="border px-4 py-2">{item.category}</td>
                                     <td className="border px-4 py-2">
                                         <button
                                             onClick={() => onEditItem(item)}
