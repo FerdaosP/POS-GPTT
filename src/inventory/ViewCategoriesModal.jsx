@@ -38,7 +38,7 @@ const ViewCategoriesModal = ({
                             <div key={category.id} className="p-2 border rounded mb-2 flex justify-between items-center">
                                 {editingCategory?.id === category.id ? (
                                     <CategoryForm
-                                        initialCategory={editingCategory}
+                                        initialCategory={editingCategory} // Pass the entire category object, including the `id`
                                         onSave={handleSaveEdit}
                                         onClose={handleCancelEdit}
                                     />
@@ -53,7 +53,7 @@ const ViewCategoriesModal = ({
                                                 Edit
                                             </button>
                                             <button
-                                                onClick={() => onDeleteCategory(category.id)}
+                                                onClick={() => onDeleteCategory(category.id)} // Pass the category ID
                                                 className="bg-red-500 text-white px-2 py-1 rounded"
                                             >
                                                 Delete

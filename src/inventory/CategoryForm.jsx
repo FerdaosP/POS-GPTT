@@ -5,7 +5,7 @@ import axios from "axios";
 
 const CategoryForm = ({ initialCategory, onSave, onClose }) => {
     const [form, setForm] = useState({
-        id: initialCategory?.id || null, // Include the `id` for editing
+        id: initialCategory?.id || null, // Include the `id` for reference (if needed)
         name: initialCategory?.name || "", // Pre-fill the name if editing
     });
     const [loading, setLoading] = useState(false);
@@ -40,9 +40,9 @@ const CategoryForm = ({ initialCategory, onSave, onClose }) => {
 
         try {
             let response;
-            if (form.id) {
+            if (form.name) { // Use category name instead of ID
                 // Update existing category
-                response = await axios.put(`${categoryUrl}${form.id}/`, form, {
+                response = await axios.put(`${categoryUrl}${form.name}/`, form, {
                     headers: {
                         'Content-Type': 'application/json',
                     },

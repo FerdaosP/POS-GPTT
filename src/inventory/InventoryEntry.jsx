@@ -276,9 +276,9 @@ const InventoryEntry = () => {
         }
     };
 
-    const handleDeleteCategory = async (categoryId) => {
+    const handleDeleteCategory = async (categoryName) => {
         try {
-            await axios.delete(`${categoryUrl}${categoryId}/`);
+            await axios.delete(`${categoryUrl}${categoryName}/`); // Use category name in the URL
             fetchCategories();
             showNotification("Category deleted successfully!");
         } catch (err) {
