@@ -1,14 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, Button, Form } from 'react-bootstrap';
 import axios from "axios";
 
-const CategoryForm = ({ isOpen, onClose, onSave }) => {
+const CategoryForm = ({ initialCategory, onSave, onClose }) => {
     const [form, setForm] = useState({
-        name: "", // Ensure this matches the backend's expected field
+        id: initialCategory?.id || null, // Include the `id` for editing
+        name: initialCategory?.name || "", // Pre-fill the name if editing
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    const categoryUrl = 'http://localhost:8000/api/service-categories/'; // Define the category URL
+
+    // Update the form state if `initialCategory` changes
+    useEffect(() => {
+        if (initialCategory) {
+            setForm({
+                id: initialCategory.id,
+                name: initialCategory.name,
+            });
+        } else {
+            setForm({
+                id: null,
+                name: "",
+            });
+        }
+    }, [initialCategory]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -21,15 +39,25 @@ const CategoryForm = ({ isOpen, onClose, onSave }) => {
         setError(null);
 
         try {
-            // Send the category data to the backend
-            const response = await axios.post('http://localhost:8000/api/service-categories/', form, {
-                headers: {
-                    'Content-Type': 'application/json', // Ensure the correct content type
-                },
-            });
+            let response;
+            if (form.id) {
+                // Update existing category
+                response = await axios.put(`${categoryUrl}${form.id}/`, form, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+            } else {
+                // Create new category
+                response = await axios.post(categoryUrl, form, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+            }
 
-            if (response.status === 201) {
-                onSave(response.data); // Pass the created category data back to the parent
+            if (response.status === 200 || response.status === 201) {
+                onSave(response.data); // Pass the saved/updated category data back to the parent
             }
         } catch (err) {
             console.error("Error saving category:", err);

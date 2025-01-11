@@ -13,7 +13,7 @@ import { generateRepairID } from "../reparatiekaart/utils";
 import RepairTicketPrint from "../reparatiekaart/RepairTicketPrint";
 import ItemForm from "./ItemForm";
 import InventoryList from "./InventoryList";
-import CategoryForm from "./CategoryForm";
+import ViewCategoriesModal from "./ViewCategoriesModal";
 
 const InventoryEntry = () => {
     const [inventory, setInventory] = useState([]);
@@ -32,7 +32,8 @@ const InventoryEntry = () => {
     const [editItem, setEditItem] = useState(null);
     const [deleteItemId, setDeleteItemId] = useState(null);
     const [selectedItems, setSelectedItems] = useState([]);
-    const [showCategoryForm, setShowCategoryForm] = useState(false);
+    const [showCategoryList, setShowCategoryList] = useState(false);
+    const [showAddCategoryForm, setShowAddCategoryForm] = useState(false);
     const [categories, setCategories] = useState([]);
 
     const apiUrl = 'http://localhost:8000/api/products/';
@@ -46,9 +47,13 @@ const InventoryEntry = () => {
     const fetchCategories = async () => {
         try {
             const response = await axios.get(categoryUrl);
-            setCategories(response.data);
+            const categoriesData = response.data.map(item => ({
+                id: item.id,
+                name: item.name
+            }));
+            setCategories(categoriesData);
         } catch (error) {
-            console.error("Error fetching categories:", error);
+            console.error("Error fetching categories", error);
             showNotification("Error fetching categories! Check the console.", "error");
         }
     };
@@ -246,23 +251,54 @@ const InventoryEntry = () => {
         setShowAddItemModal(false);
     };
 
-    const handleOpenCategoryForm = () => {
-        setShowCategoryForm(true);
-    };
-
-    const handleCancelCategoryForm = () => {
-        setShowCategoryForm(false);
-    };
-
     const handleSaveCategory = async (category) => {
         try {
-            await fetchCategories(); // Refresh the category list
-            showNotification("Category created successfully!");
-            setShowCategoryForm(false);
+            await fetchCategories();
+            showNotification("Category saved successfully!");
+            setShowAddCategoryForm(false);
         } catch (err) {
-            console.error("Error creating category:", err);
-            showNotification("Error creating category! Check the console.", "error");
+            console.error("Error saving category", err);
+            showNotification("Error saving category! Check the console", "error");
         }
+    };
+
+    const handleEditCategory = async (updatedCategory) => {
+        try {
+            if (!updatedCategory.id) {
+                throw new Error("Category ID is missing.");
+            }
+            await axios.put(`${categoryUrl}${updatedCategory.id}/`, updatedCategory);
+            fetchCategories();
+            showNotification("Category updated successfully!");
+        } catch (err) {
+            console.error("Error updating category", err);
+            showNotification("Error updating category! Check the console", "error");
+        }
+    };
+
+    const handleDeleteCategory = async (categoryId) => {
+        try {
+            await axios.delete(`${categoryUrl}${categoryId}/`);
+            fetchCategories();
+            showNotification("Category deleted successfully!");
+        } catch (err) {
+            console.error("Error deleting category", err);
+            showNotification("Error deleting category! Check the console", "error");
+        }
+    };
+
+    const handleOpenCategoryList = () => {
+        setShowCategoryList(true);
+        setShowAddCategoryForm(false);
+    };
+
+    const handleCancelCategoryList = () => {
+        setShowCategoryList(false);
+        setShowAddCategoryForm(false);
+    };
+
+    const handleToggleAddCategoryForm = () => {
+        setShowAddCategoryForm((prev) => !prev);
     };
 
     const filteredItems = inventory.filter((item) => {
@@ -409,11 +445,11 @@ const InventoryEntry = () => {
                     Add Item
                 </button>
                 <button
-                    onClick={handleOpenCategoryForm}
-                    className="bg-blue-500 text-white px-4 py-2 rounded"
-                    aria-label="Add Category"
+                    onClick={handleOpenCategoryList}
+                    className="bg-purple-500 text-white px-4 py-2 rounded"
+                    aria-label="View Categories"
                 >
-                    Add Category
+                    View Categories
                 </button>
             </div>
 
@@ -439,18 +475,16 @@ const InventoryEntry = () => {
                 onConfirm={() => handleDeleteItem(deleteItemId)}
                 repairId={deleteItemId}
             />
-            {showCategoryForm && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg w-[calc(100%-64px)] max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-xl font-semibold mb-4">Create New Category</h2>
-                        <CategoryForm
-                            onSave={handleSaveCategory}
-                            onClose={handleCancelCategoryForm}
-                        />
-                        <button onClick={handleCancelCategoryForm} className="bg-gray-500 text-white px-4 py-2 rounded mt-4">Cancel</button>
-                    </div>
-                </div>
-            )}
+            <ViewCategoriesModal
+                isOpen={showCategoryList}
+                onClose={handleCancelCategoryList}
+                categories={categories}
+                showAddCategoryForm={showAddCategoryForm}
+                onToggleAddCategoryForm={handleToggleAddCategoryForm}
+                onSaveCategory={handleSaveCategory}
+                onEditCategory={handleEditCategory}
+                onDeleteCategory={handleDeleteCategory}
+            />
         </div>
     );
 };
