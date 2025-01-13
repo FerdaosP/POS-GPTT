@@ -55,7 +55,7 @@ const EditDeviceModal = ({ isOpen, onClose, onSave, initialItem }) => {
       }
 
   return (
-        <Modal show={isOpen} onHide={onClose} centered size="lg" className="modal-premium">
+        <Modal show={isOpen} onHide={onClose} centered size="lg" className="modal-premium" style={{zIndex:1600}}>
             <div className="modal-content-premium">
                 <Modal.Header closeButton>
                     <Modal.Title>Edit Device</Modal.Title>

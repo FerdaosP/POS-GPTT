@@ -1,5 +1,3 @@
-import React from "react";
-
 const DeviceList = ({ devices = [], onEditItem, onDelete }) => {
     return (
         <div className="mb-6 overflow-x-auto">
@@ -39,7 +37,7 @@ const DeviceList = ({ devices = [], onEditItem, onDelete }) => {
                                             Edit
                                         </button>
                                         <button
-                                            onClick={() => onDelete(device.sku)}
+                                            onClick={() => onDelete(device.imei)} /* Use device.imei here */
                                             className="text-red-500 hover:text-red-700"
                                             aria-label="Delete"
                                         >

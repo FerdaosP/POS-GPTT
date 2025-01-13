@@ -139,10 +139,19 @@ const InventoryEntry = () => {
     const handleUpdateItem = async (updatedItem) => {
         setIsLoadingUpdate(true);
         try {
-            await axios.put(`${apiUrl}${updatedItem.sku}/`, updatedItem);
-            fetchInventory();
+            let updateUrl = apiUrl;
+            if (updatedItem.imei) {
+                updateUrl = deviceApiUrl;
+                await axios.put(`${updateUrl}${updatedItem.imei}/`, updatedItem); // Use imei for devices
+                fetchDevices();
+            } else {
+                // Use the original SKU in the URL, but send the new SKU in the payload
+                const originalSku = editItem.sku; // Get the original SKU from the editItem state
+                await axios.put(`${apiUrl}${originalSku}/`, updatedItem); // Use original SKU in the URL
+                fetchInventory();
+            }
             showNotification("Item updated successfully!");
-             setEditItem(null);
+            setEditItem(null);
             setShowEditDeviceModal(false);
         } catch (error) {
             console.error("Error updating item:", error);
@@ -152,8 +161,12 @@ const InventoryEntry = () => {
         }
     };
 
-     const confirmDeleteItem = (itemId) => {
-        setDeleteItemId(itemId);
+    const confirmDeleteItem = (itemId) => {
+        if (activeList === "devices") {
+            handleDeleteDevice(itemId); // Call handleDeleteDevice for devices
+        } else {
+            handleDeleteItem(itemId); // Call handleDeleteItem for items
+        }
     };
 
     const handleDeleteItem = async (itemId) => {
@@ -651,11 +664,18 @@ const InventoryEntry = () => {
                 </div>
             )}
             <DeleteInventoryModal
-                isOpen={!!deleteItemId}
-                onClose={() => setDeleteItemId(null)}
-                onConfirm={() => handleDeleteItem(deleteItemId)}
-                itemId={deleteItemId}
-             />
+    isOpen={!!deleteItemId}
+    onClose={() => setDeleteItemId(null)}
+    onConfirm={() => {
+        if (activeList === "devices") {
+            handleDeleteDevice(deleteItemId); // Call handleDeleteDevice for devices
+        } else {
+            handleDeleteItem(deleteItemId); // Call handleDeleteItem for items
+        }
+    }}
+    itemId={deleteItemId}
+    isDevice={activeList === "devices"} // Pass isDevice prop
+/>
               {showEditDeviceModal && (
                  <EditDeviceModal
                      isOpen={showEditDeviceModal}

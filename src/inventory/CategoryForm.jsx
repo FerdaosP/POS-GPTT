@@ -37,12 +37,12 @@ const CategoryForm = ({ initialCategory, onSave, onClose }) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
-
+    
         try {
             let response;
-            if (form.name) { // Use category name instead of ID
-                // Update existing category
-                response = await axios.put(`${categoryUrl}${form.name}/`, form, {
+            if (form.id) { // Check if the category ID exists (editing an existing category)
+                // Update existing category using the category ID
+                response = await axios.put(`${categoryUrl}${form.id}/`, form, {
                     headers: {
                         'Content-Type': 'application/json',
                     },
@@ -55,7 +55,7 @@ const CategoryForm = ({ initialCategory, onSave, onClose }) => {
                     },
                 });
             }
-
+    
             if (response.status === 200 || response.status === 201) {
                 onSave(response.data); // Pass the saved/updated category data back to the parent
             }
