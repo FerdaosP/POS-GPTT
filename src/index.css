@@ -43,32 +43,23 @@
 
 /* Premium Components */
 @layer components {
-  /* Glass Card Effect */
+  /* Glass Card Effect - Changed to Gray Fade */
   .glass-card {
-    @apply bg-white/80 backdrop-blur-lg border border-white/20 shadow-soft;
-    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    @apply bg-gray-50 border border-gray-200 shadow-soft;
+   
   }
   
-  /* Gradient Buttons */
+  /* Gradient Buttons - Changed to solid button */
   .btn-gradient {
-    @apply relative overflow-hidden transition-all duration-300;
-    background: linear-gradient(135deg, var(--color-primary-start), var(--color-primary-end));
+    @apply relative overflow-hidden transition-all duration-300 bg-primary-500 text-white;
   }
   
   .btn-gradient:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+     background-color: #4f46e5;
   }
-  
-  .btn-gradient::before {
-    content: '';
-    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
-    background: linear-gradient(135deg, var(--color-primary-end), var(--color-primary-start));
-  }
-  
-  .btn-gradient:hover::before {
-    @apply opacity-100;
-  }
+
   
   /* Floating Cards */
   .floating-card {
@@ -86,7 +77,7 @@
   }
   
   .table-premium th {
-    @apply bg-gradient-to-r from-gray-50 to-gray-100 
+    @apply bg-gray-100 
            text-gray-700 font-semibold px-6 py-4 
            border-b border-gray-200;
   }
@@ -96,7 +87,7 @@
   }
   
   .table-premium tr:hover td {
-    @apply bg-gray-50/50 backdrop-blur-sm;
+    @apply bg-gray-50/50;
   }
   
   /* Status Badges */
@@ -111,8 +102,7 @@
   
   /* Sidebar Enhancement */
   .sidebar-premium {
-    @apply fixed left-0 top-0 h-full bg-gradient-to-b 
-           from-gray-900 to-gray-800 text-white
+    @apply fixed left-0 top-0 h-full bg-gray-800 text-white
            transition-all duration-300;
     box-shadow: 4px 0 25px rgba(0, 0, 0, 0.1);
   }
@@ -132,8 +122,7 @@
   
   /* Dashboard Cards */
   .stat-card-premium {
-    @apply glass-card p-6 rounded-xl transition-all duration-300;
-    background: linear-gradient(135deg, var(--color-surface), rgba(255,255,255,0.9));
+    @apply bg-gray-50  p-6 rounded-xl transition-all duration-300 border border-gray-200 shadow-soft;
   }
   
   .stat-card-premium:hover {
@@ -145,38 +134,25 @@
   .input-premium {
     @apply w-full px-4 py-3 rounded-lg border border-gray-200 
            focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500
-           transition-all duration-200;
-    background: linear-gradient(135deg, #ffffff, #fafafa);
+           transition-all duration-200 bg-white;
   }
   
   .select-premium {
     @apply appearance-none w-full px-4 py-3 rounded-lg border border-gray-200
            focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500
-           transition-all duration-200;
-    background: linear-gradient(135deg, #ffffff, #fafafa);
+           transition-all duration-200 bg-white;
   }
   
   /* Modal Enhancement */
   .modal-premium {
     @apply fixed inset-0 z-50 flex items-center justify-center p-4;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(0px);
+    background: rgba(0,0,0,0.7)
   }
   
   .modal-content-premium {
-    @apply glass-card w-full max-w-lg rounded-2xl p-8 
-           transform transition-all duration-300;
-    animation: modalAppear 0.3s ease-out;
-  }
-  
-  @keyframes modalAppear {
-    from {
-      opacity: 0;
-      transform: scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
+    @apply bg-gray-50 border border-gray-200 shadow-soft w-full max-w-lg rounded-2xl p-8 
+           transform transition-all duration-300; /* removed animation*/
   }
   
   /* Loading States */

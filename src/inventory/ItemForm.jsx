@@ -58,25 +58,27 @@ const ItemForm = ({onClose, onSave, initialItem}) => {
 
     return (
         <Form onSubmit={handleSubmit}>
+              {!form.imei && (
                 <Form.Group className="mb-3">
                    <Form.Label>SKU:</Form.Label>
-                   <Form.Control type="text" name="sku" value={form.sku} onChange={handleChange} required/>
+                   <Form.Control type="text" name="sku" value={form.sku} onChange={handleChange} required className="input-premium"/>
                </Form.Group>
+              )}
                 <Form.Group className="mb-3">
                      <Form.Label>Name:</Form.Label>
-                       <Form.Control type="text" name="name" value={form.name} onChange={handleChange} required/>
+                       <Form.Control type="text" name="name" value={form.name} onChange={handleChange} required className="input-premium"/>
                    </Form.Group>
                   <Form.Group className="mb-3">
                       <Form.Label>Description:</Form.Label>
-                        <Form.Control as="textarea" name="description" value={form.description} onChange={handleChange} rows={3}/>
+                        <Form.Control as="textarea" name="description" value={form.description} onChange={handleChange} rows={3} className="input-premium"/>
                  </Form.Group>
                  <Form.Group className="mb-3">
                     <Form.Label>Price:</Form.Label>
-                     <Form.Control type="number" name="price" value={form.price} onChange={handleChange} required/>
+                     <Form.Control type="number" name="price" value={form.price} onChange={handleChange} required className="input-premium"/>
                    </Form.Group>
                  <Form.Group className="mb-3">
                      <Form.Label>Quantity:</Form.Label>
-                      <Form.Control type="number" name="quantity_on_hand" value={form.quantity_on_hand} onChange={handleChange} required/>
+                      <Form.Control type="number" name="quantity_on_hand" value={form.quantity_on_hand} onChange={handleChange} required className="input-premium"/>
                  </Form.Group>
                  <Form.Group className="mb-3">
                      <Form.Label>Category:</Form.Label>
@@ -86,6 +88,7 @@ const ItemForm = ({onClose, onSave, initialItem}) => {
                         value={form.category}
                         onChange={handleChange}
                         required
+                         className="select-premium"
                     >
                          <option value="" disabled>Select a category</option>
                             {categories?.map((category) => (

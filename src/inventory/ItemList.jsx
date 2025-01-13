@@ -1,14 +1,14 @@
 import React from "react";
 
-const InventoryList = ({ inventory = [], onEditItem, onDeleteItem }) => {
+const ItemList = ({ inventory = [], onEditItem, onDelete }) => {
     return (
         <div className="mb-6 overflow-x-auto">
-            <h2 className="text-xl font-semibold mb-2">Current Inventory</h2>
+            <h2 className="text-xl font-semibold mb-2">Current Inventory Items</h2>
             {inventory.length === 0 ? (
                 <p className="text-gray-500">No inventory items at the moment.</p>
             ) : (
                 <div className="overflow-x-auto">
-                    <table className="w-full table-auto border-collapse border border-gray-300 min-w-[1000px]">
+                    <table className="table-premium min-w-[1000px]">
                         <thead className="bg-gray-100">
                             <tr className="text-left">
                                 <th className="cursor-pointer py-2 px-4">SKU</th>
@@ -39,7 +39,7 @@ const InventoryList = ({ inventory = [], onEditItem, onDeleteItem }) => {
                                             Edit
                                         </button>
                                         <button
-                                            onClick={() => onDeleteItem(item.sku)}
+                                            onClick={() => onDelete(item.sku)}
                                             className="text-red-500 hover:text-red-700"
                                             aria-label="Delete"
                                         >
@@ -56,4 +56,4 @@ const InventoryList = ({ inventory = [], onEditItem, onDeleteItem }) => {
     );
 };
 
-export default InventoryList;
+export default ItemList;

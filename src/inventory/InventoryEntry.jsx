@@ -6,17 +6,24 @@ import axios from 'axios';
 
 import Alert, { AlertDescription } from "../reparatiekaart/Alert";
 import Loading from "../reparatiekaart/Loading";
-import DeleteConfirmationModal from "../reparatiekaart/DeleteConfirmationModal";
 import ViewAttachmentsModal from "../reparatiekaart/ViewAttachmentsModal";
 import RepairHistoryModal from "../reparatiekaart/RepairHistoryModal";
 import { generateRepairID } from "../reparatiekaart/utils";
 import RepairTicketPrint from "../reparatiekaart/RepairTicketPrint";
 import ItemForm from "./ItemForm";
-import InventoryList from "./InventoryList";
 import ViewCategoriesModal from "./ViewCategoriesModal";
+import DeleteInventoryModal from "./DeleteInventoryModal";
+import EditItemModal from "./EditItemModal";
+import AddItemTypeModal from "./AddItemTypeModal";
+import AddDeviceModal from "./AddDeviceModal";
+import EditDeviceModal from "./EditDeviceModal";
+import ItemList from "./ItemList";
+import DeviceList from "./DeviceList";
+
 
 const InventoryEntry = () => {
     const [inventory, setInventory] = useState([]);
+    const [devices, setDevices] = useState([]);
     const [showAddItemModal, setShowAddItemModal] = useState(false);
     const [isLoadingAddItem, setIsLoadingAddItem] = useState(false);
     const [isLoadingDelete, setIsLoadingDelete] = useState(false);
@@ -35,12 +42,18 @@ const InventoryEntry = () => {
     const [showCategoryList, setShowCategoryList] = useState(false);
     const [showAddCategoryForm, setShowAddCategoryForm] = useState(false);
     const [categories, setCategories] = useState([]);
+     const [showAddItemTypeModal, setShowAddItemTypeModal] = useState(false);
+    const [showAddDeviceModal, setShowAddDeviceModal] = useState(false);
+     const [showEditDeviceModal, setShowEditDeviceModal] = useState(false);
+    const [activeList, setActiveList] = useState("items");
 
     const apiUrl = 'http://localhost:8000/api/products/';
+     const deviceApiUrl = 'http://localhost:8000/api/devices/';
     const categoryUrl = 'http://localhost:8000/api/service-categories/';
 
     useEffect(() => {
         fetchInventory();
+        fetchDevices();
         fetchCategories();
     }, []);
 
@@ -57,6 +70,16 @@ const InventoryEntry = () => {
             showNotification("Error fetching categories! Check the console.", "error");
         }
     };
+  const fetchDevices = async () => {
+        try {
+            const response = await axios.get(deviceApiUrl);
+            setDevices(JSON.parse(JSON.stringify(response.data)));
+        } catch (error) {
+            console.error("Error fetching devices:", error);
+            showNotification("Error fetching devices! Check the console.", "error");
+        }
+    };
+
 
     const fetchInventory = async () => {
         try {
@@ -73,10 +96,10 @@ const InventoryEntry = () => {
         setTimeout(() => setNotification(null), 3000);
     };
 
-    const handleAddItem = async (newItemData) => {
+   const handleAddItem = async (newItemData) => {
         setIsLoadingAddItem(true);
         try {
-            await axios.post(apiUrl, newItemData);
+             await axios.post(apiUrl, newItemData);
             fetchInventory();
             showNotification("Item added successfully!");
             setShowAddItemModal(false);
@@ -88,8 +111,29 @@ const InventoryEntry = () => {
         }
     };
 
+     const handleAddDevice = async (newDeviceData) => {
+         setIsLoadingAddItem(true);
+         try {
+             await axios.post(deviceApiUrl, newDeviceData);
+            fetchDevices();
+            showNotification("Device added successfully!");
+            setShowAddDeviceModal(false);
+        } catch (error) {
+            console.error("Error adding device:", error);
+            showNotification("Error adding device!", "error");
+         } finally {
+             setIsLoadingAddItem(false);
+        }
+    };
+
     const handleEdit = (item) => {
-        setEditItem({ ...item });
+       if(item.imei) {
+            setEditItem({...item});
+             setShowEditDeviceModal(true);
+        } else {
+             setEditItem({ ...item });
+            setShowAddItemModal(true);
+        }
     };
 
     const handleUpdateItem = async (updatedItem) => {
@@ -98,7 +142,8 @@ const InventoryEntry = () => {
             await axios.put(`${apiUrl}${updatedItem.sku}/`, updatedItem);
             fetchInventory();
             showNotification("Item updated successfully!");
-            setEditItem(null);
+             setEditItem(null);
+            setShowEditDeviceModal(false);
         } catch (error) {
             console.error("Error updating item:", error);
             showNotification("Error updating item!", "error");
@@ -107,24 +152,40 @@ const InventoryEntry = () => {
         }
     };
 
-    const confirmDeleteItem = (itemId) => {
+     const confirmDeleteItem = (itemId) => {
         setDeleteItemId(itemId);
     };
 
     const handleDeleteItem = async (itemId) => {
         setIsLoadingDelete(true);
         try {
-            await axios.delete(`${apiUrl}${itemId}/`);
-            fetchInventory();
+             await axios.delete(`${apiUrl}${itemId}/`);
+             fetchInventory();
             showNotification("Item deleted successfully!");
             setDeleteItemId(null);
         } catch (error) {
-            console.error("Error deleting item:", error);
+             console.error("Error deleting item:", error);
             showNotification("Error deleting item!", "error");
         } finally {
             setIsLoadingDelete(false);
         }
     };
+
+     const handleDeleteDevice = async (itemId) => {
+        setIsLoadingDelete(true);
+        try {
+           await axios.delete(`${deviceApiUrl}${itemId}/`);
+           fetchDevices();
+             showNotification("Device deleted successfully!");
+            setDeleteItemId(null);
+       } catch (error) {
+           console.error("Error deleting device:", error);
+            showNotification("Error deleting device!", "error");
+        } finally {
+            setIsLoadingDelete(false)
+       }
+    };
+
 
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -149,7 +210,7 @@ const InventoryEntry = () => {
         setIsLoadingExport(true);
         try {
             await new Promise((resolve) => setTimeout(resolve, 1000));
-            const itemsToExport = inventory.filter(item => selectedItems.includes(item.sku));
+            const itemsToExport = activeList === "items" ? inventory.filter(item => selectedItems.includes(item.sku)): devices.filter(device => selectedItems.includes(device.sku))
 
             if (itemsToExport.length === 0) {
                 showNotification("No items selected for export!", "error");
@@ -173,26 +234,40 @@ const InventoryEntry = () => {
         }
     };
 
-    const exportToCSV = (itemsToExport) => {
+     const exportToCSV = (itemsToExport) => {
         const csvContent = [
-            [
+           activeList === "items" ? [
                 "SKU",
                 "Name",
                 "Description",
                 "Price",
                 "Quantity On Hand",
                 "Category"
-            ].join(","),
-            ...itemsToExport.map((item) =>
-                [
-                    item.sku,
-                    item.name,
-                    item.description,
-                    item.price,
-                    item.quantity_on_hand,
-                    item.category,
-                ].join(",")
-            ),
+            ].join(",") : [
+                  "Name",
+                "Description",
+                "Price",
+                "Quantity On Hand",
+                "IMEI",
+                 "Storage"
+           ].join(","),
+            ...itemsToExport.map(item =>
+            activeList === "items" ? [
+                item.sku,
+                item.name,
+                item.description,
+                item.price,
+                item.quantity_on_hand,
+                item.category,
+            ].join(",") :  [
+                  item.name,
+                  item.description,
+                item.price,
+                item.quantity_on_hand,
+                item.imei,
+                item.storage
+            ].join(",")
+         ),
         ].join("\n");
 
         const blob = new Blob([csvContent], { type: "text/csv" });
@@ -201,28 +276,46 @@ const InventoryEntry = () => {
         link.href = url;
         link.download = "inventory.csv";
         link.click();
-        showNotification('CSV export completed');
+        showNotification('CSV export completed')
     };
 
-    const exportToPDF = (itemsToExport) => {
+
+   const exportToPDF = (itemsToExport) => {
         const doc = new jsPDF();
-        const tableColumn = [
+        const tableColumn = activeList === "items" ? [
             "SKU",
             "Name",
             "Description",
             "Price",
             "Quantity On Hand",
             "Category"
+        ] : [
+            "Name",
+            "Description",
+            "Price",
+            "Quantity On Hand",
+            "IMEI",
+            "Storage"
         ];
 
-        const tableRows = itemsToExport.map(item => [
-            item.sku,
-            item.name,
-            item.description,
-            item.price,
-            item.quantity_on_hand,
-            item.category,
-        ]);
+
+        const tableRows = itemsToExport.map(item =>
+            activeList === "items" ? [
+                item.sku,
+                item.name,
+                item.description,
+                item.price,
+                item.quantity_on_hand,
+                 item.category,
+            ] : [
+                item.name,
+                item.description,
+                item.price,
+                item.quantity_on_hand,
+                 item.imei,
+                 item.storage
+            ]
+        );
 
         doc.autoTable({
             head: [tableColumn],
@@ -231,7 +324,7 @@ const InventoryEntry = () => {
         });
 
         doc.save('inventory.pdf');
-        showNotification('PDF export completed');
+        showNotification('PDF export completed')
     };
 
     const handleSelectRepair = (itemId, isSelected) => {
@@ -243,13 +336,27 @@ const InventoryEntry = () => {
     };
 
     const handleOpenAddItemModal = () => {
-        setEditItem(null);
-        setShowAddItemModal(true);
+        setShowAddItemTypeModal(true);
     };
+
+
+    const handleCloseAddItemTypeModal = () => {
+        setShowAddItemTypeModal(false);
+    };
+
+     const handleOpenAddDeviceModal = () => {
+          setShowAddDeviceModal(true);
+    };
+
+      const handleCloseAddDeviceModal = () => {
+         setShowAddDeviceModal(false);
+    };
+
 
     const handleCloseAddItemModal = () => {
         setShowAddItemModal(false);
     };
+
 
     const handleSaveCategory = async (category) => {
         try {
@@ -301,6 +408,12 @@ const InventoryEntry = () => {
         setShowAddCategoryForm((prev) => !prev);
     };
 
+     const handleListChange = (listType) => {
+         setActiveList(listType);
+         setCurrentPage(1);
+     };
+
+
     const filteredItems = inventory.filter((item) => {
         return (
             (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -309,8 +422,26 @@ const InventoryEntry = () => {
             (filterCategory === "" || item.category === filterCategory)
         );
     });
+    const filteredDevices = devices.filter((item) => {
+        return (
+             (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.imei.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+         );
+    });
 
     const sortedItems = [...filteredItems].sort((a, b) => {
+        const aValue = a[sortColumn];
+        const bValue = b[sortColumn];
+        if (aValue < bValue) {
+            return sortDirection === "asc" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+            return sortDirection === "asc" ? 1 : -1;
+        }
+        return 0;
+    });
+      const sortedDevices = [...filteredDevices].sort((a, b) => {
         const aValue = a[sortColumn];
         const bValue = b[sortColumn];
         if (aValue < bValue) {
@@ -326,6 +457,11 @@ const InventoryEntry = () => {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
+      const paginatedDevices = sortedDevices.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+     const filteredPaginatedInventory = activeList === "items" ? paginatedItems : paginatedDevices;
 
     return (
         <div className="p-4 relative">
@@ -346,65 +482,89 @@ const InventoryEntry = () => {
             )}
 
             <h1 className="text-2xl font-bold mb-4">Inventory</h1>
-
+             <div className="mb-4 flex gap-2">
+                <button
+                     onClick={() => handleListChange("items")}
+                      className={`${activeList === "items" ? "bg-gray-200" : "bg-gray-100"} text-gray-700 px-4 py-2 rounded `}
+                  >
+                     Items
+                 </button>
+                  <button
+                    onClick={() => handleListChange("devices")}
+                   className={`${activeList === "devices" ? "bg-gray-200" : "bg-gray-100"} text-gray-700 px-4 py-2 rounded `}
+                  >
+                       Devices
+                   </button>
+            </div>
             {/* Search and Filter */}
-            <div className="flex mb-4">
+           <div className="flex mb-4">
                 <input
                     type="text"
-                    placeholder="Search by Item Name or SKU"
+                     placeholder={activeList === "items" ? "Search by Item Name or SKU" : "Search by Device Name or IMEI"}
                     value={searchTerm}
                     onChange={handleSearch}
-                    className="border p-2 mr-2 rounded w-full"
+                     className="input-premium mr-2 rounded w-full"
                     aria-label="Search items"
                 />
-                <select
-                    value={filterCategory}
-                    onChange={handleFilterCategory}
-                    className="border p-2 rounded"
-                    aria-label="Filter by category"
-                >
-                    <option value="">All Categories</option>
-                    {categories.map((category) => (
-                        <option key={category.id} value={category.name}>{category.name}</option>
-                    ))}
-                </select>
+                 {activeList === "items" && (
+                    <select
+                        value={filterCategory}
+                        onChange={handleFilterCategory}
+                       className="select-premium rounded"
+                         aria-label="Filter by category"
+                    >
+                       <option value="">All Categories</option>
+                        {categories.map((category) => (
+                           <option key={category.id} value={category.name}>{category.name}</option>
+                         ))}
+                    </select>
+                 )}
             </div>
 
             {/* Pagination Info */}
-            <div className="mb-4">
+           <div className="mb-4">
                 <span className="text-sm text-gray-600">
-                    Showing page {currentPage} of {Math.ceil(sortedItems.length / itemsPerPage)}
-                    ({sortedItems.length} total records)
+                    Showing page {currentPage} of {Math.ceil(filteredPaginatedInventory.length / itemsPerPage)}
+                    ({filteredPaginatedInventory.length} total records)
                 </span>
             </div>
-
-            {/* Repair List */}
-            <InventoryList
-                inventory={paginatedItems}
-                onPageChange={setCurrentPage}
-                onDelete={confirmDeleteItem}
-                onEditItem={handleEdit}
-                onSort={handleSort}
-            />
+            {/* Inventory List */}
+               {activeList === "items" ? (
+                    <ItemList
+                        inventory={filteredPaginatedInventory}
+                         onPageChange={setCurrentPage}
+                        onDelete={confirmDeleteItem}
+                        onEditItem={handleEdit}
+                         onSort={handleSort}
+                   />
+                 ) : (
+                   <DeviceList
+                        devices={filteredPaginatedInventory}
+                        onPageChange={setCurrentPage}
+                        onDelete={confirmDeleteItem}
+                         onEditItem={handleEdit}
+                         onSort={handleSort}
+                    />
+                )}
 
             {/* Export Buttons */}
             <div className="flex justify-between items-center mb-4">
                 <div className="flex space-x-2">
                     <button
                         onClick={() => handleExport("csv")}
-                        className="bg-blue-500 text-white px-4 py-2 rounded flex items-center space-x-2"
+                         className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded"
                         aria-label="Export to CSV"
                     >
                         <Download size={16} />
-                        <span>CSV</span>
+                         <span>CSV</span>
                     </button>
                     <button
                         onClick={() => handleExport("pdf")}
-                        className="bg-red-500 text-white px-4 py-2 rounded flex items-center space-x-2"
-                        aria-label="Export to PDF"
+                         className="flex items-center space-x-2 bg-red-500 text-white px-4 py-2 rounded"
+                         aria-label="Export to PDF"
                     >
                         <File size={16} />
-                        <span>PDF</span>
+                         <span>PDF</span>
                     </button>
                 </div>
                 {/* Pagination Controls */}
@@ -422,12 +582,12 @@ const InventoryEntry = () => {
                             setCurrentPage((prev) =>
                                 Math.min(
                                     prev + 1,
-                                    Math.ceil(sortedItems.length / itemsPerPage)
+                                    Math.ceil(filteredPaginatedInventory.length / itemsPerPage)
                                 )
                             )
                         }
-                        disabled={currentPage >= Math.ceil(sortedItems.length / itemsPerPage)}
-                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded disabled:opacity-50"
+                        disabled={currentPage >= Math.ceil(filteredPaginatedInventory.length / itemsPerPage)}
+                         className="bg-gray-200 text-gray-700 px-4 py-2 rounded disabled:opacity-50"
                         aria-label="Next Page"
                     >
                         Next
@@ -437,16 +597,16 @@ const InventoryEntry = () => {
 
             {/* Add Repair Button */}
             <div className="flex items-center mb-4 space-x-2">
-                <button
+                 <button
                     onClick={handleOpenAddItemModal}
-                    className="bg-green-500 text-white px-4 py-2 rounded"
+                     className="bg-green-500 text-white px-4 py-2 rounded"
                     aria-label="Add New Item"
                 >
                     Add Item
-                </button>
+                 </button>
                 <button
                     onClick={handleOpenCategoryList}
-                    className="bg-purple-500 text-white px-4 py-2 rounded"
+                     className="bg-purple-500 text-white px-4 py-2 rounded"
                     aria-label="View Categories"
                 >
                     View Categories
@@ -454,27 +614,56 @@ const InventoryEntry = () => {
             </div>
 
             {/* Modals */}
+            <AddItemTypeModal
+                isOpen={showAddItemTypeModal}
+                onClose={handleCloseAddItemTypeModal}
+                onSelectItem={() => {
+                   setShowAddItemTypeModal(false);
+                   setEditItem(null);
+                   setShowAddItemModal(true);
+               }}
+                 onSelectDevice={() => {
+                     setShowAddItemTypeModal(false);
+                     setEditItem(null);
+                    setShowAddDeviceModal(true);
+               }}
+           />
+             {showAddDeviceModal && (
+                <AddDeviceModal
+                        isOpen={showAddDeviceModal}
+                         onClose={handleCloseAddDeviceModal}
+                        onSave={handleAddDevice}
+                    />
+                )}
             {showAddItemModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-lg w-[calc(100%-64px)] max-h-[90vh] overflow-y-auto">
+                <div className="modal-premium">
+                    <div className="modal-content-premium">
                         <h2 className="text-xl font-semibold mb-4">
                             {editItem ? "Edit Item" : "Add Item"}
                         </h2>
                         <ItemForm
-                            onSave={handleAddItem}
+                            onSave={editItem ? handleUpdateItem : handleAddItem}
                             onClose={handleCloseAddItemModal}
                             initialItem={editItem}
                         />
-                        <button onClick={handleCloseAddItemModal} className="bg-gray-500 text-white px-4 py-2 rounded mt-4">Cancel</button>
+                         <button onClick={handleCloseAddItemModal} className="bg-gray-500 text-white px-4 py-2 rounded mt-4">Cancel</button>
                     </div>
                 </div>
             )}
-            <DeleteConfirmationModal
+            <DeleteInventoryModal
                 isOpen={!!deleteItemId}
                 onClose={() => setDeleteItemId(null)}
                 onConfirm={() => handleDeleteItem(deleteItemId)}
-                repairId={deleteItemId}
-            />
+                itemId={deleteItemId}
+             />
+              {showEditDeviceModal && (
+                 <EditDeviceModal
+                     isOpen={showEditDeviceModal}
+                     onClose={() => setShowEditDeviceModal(null)}
+                     onSave={handleUpdateItem}
+                     initialItem={editItem}
+                  />
+             )}
             <ViewCategoriesModal
                 isOpen={showCategoryList}
                 onClose={handleCancelCategoryList}
