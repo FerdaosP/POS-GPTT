@@ -27,7 +27,6 @@ const SettingsForm = ({ initialSettings, onSave }) => {
       const [showPrintLayoutModal, setShowPrintLayoutModal] = useState(false);
       const [printLayout, setPrintLayout] = useState(initialSettings?.print_layout || "<div style=\"font-family: monospace;\">   <h2 style=\"text-align: center; font-size: 16pt; font-weight: bold; margin-bottom: 5mm;\">{{ companyName }}</h2> <div style=\"font-family: monospace;\"> <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Ticket #</strong> {{ repairTicketNumber }}</p>   <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Customer:</strong> {{ customerName }}</p> <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Phone:</strong> {{ phoneNumber }}</p>  <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Device:</strong> {{ deviceType }}</p> <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>IMEI:</strong> {{ imei }}</p>  <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Issue:</strong> {{ issueDescription }}</p>  <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Technician:</strong> {{ repairTechnician }}</p>   <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Price:</strong> {{ priceEstimate }}</p>   <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Date:</strong> {{ dateReceived }}</p> </div>  <p style=\"text-align: center; font-size: 14pt; margin-top: 5mm;\">*{{ repairTicketNumber }}*</p>  <p style=\"text-align: center; font-size: 12pt; margin-top: 5mm;\">Thank you!</p>  <div style=\"font-size: 10pt; margin-top: 5mm; font-family: monospace;\"> {{ termsAndConditions }}</div> </div>");
 
-
     useEffect(() => {
         if (initialSettings) {
             setSettings(initialSettings)
@@ -60,58 +59,15 @@ const SettingsForm = ({ initialSettings, onSave }) => {
       e.preventDefault();
       setLoading(true);
       setError(null);
-      try {
-          const formData = new FormData();
-          for (const key in settings) {
-              if (key !== 'logoUrl') {
-                  formData.append(key, settings[key] || "");
-              }
-          }
-  
-          // Handle logo only if it exists and is a valid Base64 string
-          if (settings.logoUrl && typeof settings.logoUrl === 'string' && settings.logoUrl.startsWith('data:image')) {
-              try {
-                  const base64String = settings.logoUrl;
-                  const byteString = atob(base64String.split(',')[1]);
-                  const mimeString = base64String.split(',')[0].split(':')[1].split(';')[0];
-                  const ab = new ArrayBuffer(byteString.length);
-                  const ia = new Uint8Array(ab);
-                  for (let i = 0; i < byteString.length; i++) {
-                      ia[i] = byteString.charCodeAt(i);
-                  }
-                  const blob = new Blob([ab], { type: mimeString });
-                  const file = new File([blob], 'logo.png', { type: mimeString });
-                  formData.append('logoUrl', file);
-              } catch (atobError) {
-                  console.error("Error decoding base64 or creating blob:", atobError);
-                  setError(`Error processing logo: ${atobError.message}`);
-              }
-          } else if (settings.logoUrl === null || settings.logoUrl === "") {
-              // If logoUrl is empty or null, skip adding it to the formData
-              console.log("No logo provided. Skipping logo upload.");
-          } else {
-              console.error("Invalid logo format. Please upload a valid image.");
-              setError("Invalid logo format. Please upload a valid image.");
-          }
-  
-          const response = await axios.put('http://localhost:8000/api/profile/1/', formData, {
-              headers: { 'Content-Type': 'multipart/form-data' }
-          });
-  
-          if (response.status === 200) {
-              onSave(response.data);
-              console.log('Settings saved:', response.data);
-          } else {
-              setError(`Error updating settings: ${response.statusText}`);
-          }
-  
-      } catch (err) {
-          console.error('There was an error updating settings:', err);
-          setError(`There was an error updating settings: ${err.message}`);
-      } finally {
-          setLoading(false);
-      }
-  };
+      
+     // Simulate Saving Settings
+      setTimeout(() => {
+        setLoading(false);
+           onSave(settings);
+        alert("Settings saved successfully! In a real app, data would be sent to the API.")
+    }, 1000);
+
+    };
      const handleOpenTemplateModal = () => {
         setShowTemplateModal(true);
     };

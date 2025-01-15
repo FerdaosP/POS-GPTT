@@ -57,38 +57,74 @@ const InventoryEntry = () => {
         fetchCategories();
     }, []);
 
-    const fetchCategories = async () => {
-        try {
-            const response = await axios.get(categoryUrl);
-            const categoriesData = response.data.map(item => ({
-                id: item.id,
-                name: item.name
-            }));
-            setCategories(categoriesData);
-        } catch (error) {
-            console.error("Error fetching categories", error);
-            showNotification("Error fetching categories! Check the console.", "error");
-        }
-    };
+     const fetchCategories = async () => {
+           // Mock categories data
+              const categoriesData = [
+                {
+                 id: 1,
+                    name: "Category A"
+               },
+               {
+                 id: 2,
+                 name: "Category B"
+               },
+                {
+                   id: 3,
+                   name: "Category C"
+                }
+            ];
+          setCategories(categoriesData);
+        };
   const fetchDevices = async () => {
-        try {
-            const response = await axios.get(deviceApiUrl);
-            setDevices(JSON.parse(JSON.stringify(response.data)));
-        } catch (error) {
-            console.error("Error fetching devices:", error);
-            showNotification("Error fetching devices! Check the console.", "error");
-        }
+        setDevices([
+         {
+                name: "iPhone 13",
+                 description: "Apple iPhone 13",
+                price: 899.99,
+                quantity_on_hand: 15,
+                imei: "123456789012345",
+                 storage: "128GB",
+                 serial_number: "SN123456789"
+          },
+          {
+              name: "Samsung S21",
+                description: "Samsung S21",
+                 price: 799.99,
+              quantity_on_hand: 10,
+                imei: "987654321098765",
+                storage: "256GB",
+               serial_number: "SN987654321"
+          },
+        ]);
     };
-
 
     const fetchInventory = async () => {
-        try {
-            const response = await axios.get(apiUrl);
-            setInventory(JSON.parse(JSON.stringify(response.data)));
-        } catch (error) {
-            console.error("Error fetching inventory:", error);
-            showNotification("Error fetching inventory! Check the console.", "error");
-        }
+        setInventory([
+             {
+                sku: "SKU001",
+                name: "Laptop Charger",
+                description: "Standard laptop charger",
+                price: 29.99,
+               quantity_on_hand: 50,
+              category: "Accessories",
+            },
+             {
+                sku: "SKU002",
+                 name: "Screen Protector",
+                description: "High-quality screen protector",
+                price: 9.99,
+                 quantity_on_hand: 100,
+                 category: "Accessories",
+           },
+              {
+                sku: "SKU003",
+                 name: "USB C Cable",
+                description: "High-quality USB C Cable",
+                price: 15,
+                quantity_on_hand: 250,
+                 category: "Cables",
+           }
+          ]);
     };
 
     const showNotification = (message, type = "success") => {
@@ -98,32 +134,18 @@ const InventoryEntry = () => {
 
    const handleAddItem = async (newItemData) => {
         setIsLoadingAddItem(true);
-        try {
-             await axios.post(apiUrl, newItemData);
-            fetchInventory();
-            showNotification("Item added successfully!");
-            setShowAddItemModal(false);
-        } catch (error) {
-            console.error("Error adding item:", error);
-            showNotification("Error adding item!", "error");
-        } finally {
-            setIsLoadingAddItem(false);
-        }
+         setInventory(prev => ([...prev, newItemData]));
+        showNotification("Item added successfully!");
+        setShowAddItemModal(false);
+        setIsLoadingAddItem(false);
     };
 
      const handleAddDevice = async (newDeviceData) => {
          setIsLoadingAddItem(true);
-         try {
-             await axios.post(deviceApiUrl, newDeviceData);
-            fetchDevices();
-            showNotification("Device added successfully!");
-            setShowAddDeviceModal(false);
-        } catch (error) {
-            console.error("Error adding device:", error);
-            showNotification("Error adding device!", "error");
-         } finally {
-             setIsLoadingAddItem(false);
-        }
+         setDevices(prev => ([...prev, newDeviceData]));
+           showNotification("Device added successfully!");
+           setShowAddDeviceModal(false);
+            setIsLoadingAddItem(false);
     };
 
     const handleEdit = (item) => {
@@ -138,27 +160,20 @@ const InventoryEntry = () => {
 
     const handleUpdateItem = async (updatedItem) => {
         setIsLoadingUpdate(true);
-        try {
-            let updateUrl = apiUrl;
-            if (updatedItem.imei) {
-                updateUrl = deviceApiUrl;
-                await axios.put(`${updateUrl}${updatedItem.imei}/`, updatedItem); // Use imei for devices
-                fetchDevices();
-            } else {
-                // Use the original SKU in the URL, but send the new SKU in the payload
-                const originalSku = editItem.sku; // Get the original SKU from the editItem state
-                await axios.put(`${apiUrl}${originalSku}/`, updatedItem); // Use original SKU in the URL
-                fetchInventory();
+           let updateList;
+           if(updatedItem.imei){
+                 updateList =  devices.map(item => item.imei === updatedItem.imei ? updatedItem : item)
+                setDevices(updateList);
+            } else{
+                updateList =  inventory.map(item => item.sku === updatedItem.sku ? updatedItem : item)
+                 setInventory(updateList);
             }
+
             showNotification("Item updated successfully!");
             setEditItem(null);
             setShowEditDeviceModal(false);
-        } catch (error) {
-            console.error("Error updating item:", error);
-            showNotification("Error updating item!", "error");
-        } finally {
             setIsLoadingUpdate(false);
-        }
+
     };
 
     const confirmDeleteItem = (itemId) => {
@@ -171,32 +186,18 @@ const InventoryEntry = () => {
 
     const handleDeleteItem = async (itemId) => {
         setIsLoadingDelete(true);
-        try {
-             await axios.delete(`${apiUrl}${itemId}/`);
-             fetchInventory();
-            showNotification("Item deleted successfully!");
-            setDeleteItemId(null);
-        } catch (error) {
-             console.error("Error deleting item:", error);
-            showNotification("Error deleting item!", "error");
-        } finally {
-            setIsLoadingDelete(false);
-        }
+        setInventory(prev => prev.filter(item => item.sku !== itemId));
+        showNotification("Item deleted successfully!");
+        setDeleteItemId(null);
+        setIsLoadingDelete(false);
     };
 
      const handleDeleteDevice = async (itemId) => {
         setIsLoadingDelete(true);
-        try {
-           await axios.delete(`${deviceApiUrl}${itemId}/`);
-           fetchDevices();
-             showNotification("Device deleted successfully!");
-            setDeleteItemId(null);
-       } catch (error) {
-           console.error("Error deleting device:", error);
-            showNotification("Error deleting device!", "error");
-        } finally {
-            setIsLoadingDelete(false)
-       }
+        setDevices(prev => prev.filter(item => item.imei !== itemId));
+        showNotification("Device deleted successfully!");
+        setDeleteItemId(null);
+        setIsLoadingDelete(false);
     };
 
 
@@ -223,7 +224,7 @@ const InventoryEntry = () => {
         setIsLoadingExport(true);
         try {
             await new Promise((resolve) => setTimeout(resolve, 1000));
-            const itemsToExport = activeList === "items" ? inventory.filter(item => selectedItems.includes(item.sku)): devices.filter(device => selectedItems.includes(device.sku))
+            const itemsToExport = activeList === "items" ? inventory.filter(item => selectedItems.includes(item.sku)): devices.filter(device => selectedItems.includes(device.imei))
 
             if (itemsToExport.length === 0) {
                 showNotification("No items selected for export!", "error");
@@ -391,8 +392,8 @@ const InventoryEntry = () => {
             if (!updatedCategory.id) {
                 throw new Error("Category ID is missing.");
             }
-            await axios.put(`${categoryUrl}${updatedCategory.id}/`, updatedCategory);
-            fetchCategories();
+
+            await fetchCategories();
             showNotification("Category updated successfully!");
         } catch (err) {
             console.error("Error updating category", err);
@@ -402,8 +403,7 @@ const InventoryEntry = () => {
 
     const handleDeleteCategory = async (categoryName) => {
         try {
-            await axios.delete(`${categoryUrl}${categoryName}/`); // Use category name in the URL
-            fetchCategories();
+            await fetchCategories();
             showNotification("Category deleted successfully!");
         } catch (err) {
             console.error("Error deleting category", err);

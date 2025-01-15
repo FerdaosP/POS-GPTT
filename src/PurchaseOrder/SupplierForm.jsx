@@ -52,34 +52,12 @@ const SupplierForm = ({ initialSupplier, onSave, onClose }) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
-
-         try {
-            let response;
-            if (form.id) { // Check if the category ID exists (editing an existing category)
-                // Update existing category using the category ID
-                response = await axios.put(`${apiUrl}${form.id}/`, form, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-            } else {
-                // Create new category
-                response = await axios.post(apiUrl, form, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-            }
-
-            if (response.status === 200 || response.status === 201) {
-                onSave(response.data); // Pass the saved/updated category data back to the parent
-            }
-        } catch (err) {
-            console.error("Error saving category:", err);
-            setError("Error saving category. Please try again.");
-        } finally {
-            setLoading(false);
-        }
+         //Simulate saving category
+            setTimeout(() => {
+              setLoading(false)
+            onSave(form)
+            alert("Simulated save completed! In a real app, data would be sent to the API.")
+        }, 1000);
     };
      if (loading) {
           return <div>Loading categories...</div>

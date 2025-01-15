@@ -23,26 +23,32 @@ const ViewSuppliersModal = ({
    const fetchSuppliers = useCallback(async () => {
            setLoading(true);
             setError(null);
-            try {
-                const response = await axios.get(apiUrl);
-                 const suppliersData = response.data.map(item => ({
-                id: item.id,
-                name: item.name,
-                address: item.address,
-                contactPerson: item.contactPerson,
-                 phone: item.phone,
-                email: item.email,
-                vatNumber: item.vatNumber,
-                 }));
-                setSuppliers(suppliersData);
-
-            } catch (err) {
-                console.error("Error fetching Suppliers", err);
-                setError("Error fetching suppliers. Check the console");
-            } finally {
-                  setLoading(false);
-            }
-         }, [apiUrl]);
+         // Mock suppliers data
+            const mockSuppliers =  [
+                {
+                   id: 1,
+                    name: "Supplier A",
+                     address: "123 Main St",
+                    contactPerson: "John Doe",
+                    phone: "555-1234",
+                    email: "john.doe@example.com",
+                  vatNumber: "123456789",
+                },
+                {
+                    id: 2,
+                    name: "Supplier B",
+                      address: "456 Oak Ave",
+                    contactPerson: "Jane Smith",
+                      phone: "555-5678",
+                     email: "jane.smith@example.com",
+                      vatNumber: "987654321",
+                 },
+            ];
+           setTimeout(() => {
+               setSuppliers(mockSuppliers);
+               setLoading(false);
+           }, 200);
+         }, []);
 
     useEffect(() => {
         if(isOpen){
@@ -57,7 +63,7 @@ const ViewSuppliersModal = ({
 
     const handleSaveEdit = async (updatedSupplier) => {
         await onEditSupplier(updatedSupplier);
-         setEditingSupplier(null);
+        setEditingSupplier(null);
         await fetchSuppliers()
     };
 

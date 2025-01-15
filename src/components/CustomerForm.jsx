@@ -22,18 +22,58 @@ const CustomerForm = ({ onSave, onCancel }) => {
 
     useEffect(() => {
         if(customerId){
-            const fetchCustomerDetails = async () => {
-                setLoading(true);
-                try {
-                    const response = await axios.get(`http://localhost:8000/api/customers/${customerId}/`);
-                    setForm(response.data);
-                } catch (err) {
-                    console.error("Error fetching customer details:", err);
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchCustomerDetails()
+            setLoading(true);
+            // Mock customer data
+           const mockCustomers = [
+            {
+                id: 1,
+                companyNumber: "123456",
+                 companyName: "Test Company",
+                firstName: "John",
+                lastName: "Doe",
+                email: "john.doe@example.com",
+                phone: "555-1234",
+                street: "123 Main St",
+                postalCode: "12345",
+                 city: "Anytown",
+                country: "USA",
+            },
+           {
+                id: 2,
+                 companyNumber: "987654",
+                 companyName: "Another Company",
+                firstName: "Jane",
+                lastName: "Smith",
+                email: "jane.smith@example.com",
+                 phone: "555-5678",
+                street: "456 Oak Ave",
+                 postalCode: "67890",
+                city: "Otherville",
+                country: "Canada",
+             },
+             {
+                id: 3,
+                  companyNumber: "555555",
+                  companyName: "Some Company",
+                firstName: "Peter",
+                lastName: "Pan",
+                email: "peter.pan@example.com",
+                 phone: "555-4444",
+                 street: "789 Neverland",
+                 postalCode: "33333",
+                 city: "Neverland",
+                country: "Fantasy",
+              },
+          ];
+             const foundCustomer = mockCustomers.find(
+                (customer) => customer.id === parseInt(customerId)
+               );
+            if (foundCustomer) {
+               setForm(foundCustomer);
+            } else {
+               console.warn(`Customer with id ${customerId} not found`);
+             }
+               setLoading(false);
         }
     }, [customerId]);
 
@@ -66,24 +106,8 @@ const CustomerForm = ({ onSave, onCancel }) => {
         e.preventDefault();
         if (!validate()) return;
         setLoading(true);
-        try {
-            if(customerId){
-                const response = await axios.put(`http://localhost:8000/api/customers/${customerId}/`, form);
-                 if(response.status === 200){
-                      onSave(form);
-                }
-            } else {
-                const response = await axios.post('http://localhost:8000/api/customers/', form);
-                if (response.status === 201) {
-                     onSave(response.data);
-                }
-            }
-           
-        } catch (err) {
-            console.error("Error saving customer", err);
-        } finally {
-            setLoading(false)
-        }
+          onSave(form);
+             setLoading(false);
     };
 
   const handleCancel = () => {

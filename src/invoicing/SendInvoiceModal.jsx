@@ -155,36 +155,14 @@ const SendInvoiceModal = ({ isOpen, onClose, invoice, companyInfo }) => {
   const handleSend = async () => {
     setLoading(true);
     setError(null);
-    try {
-      const pdfBlob = await generatePDF();
-      if (!pdfBlob) {
-        setLoading(false);
-        return;
-      }
-      const pdfFile = new File([pdfBlob], `invoice-${invoice.invoiceNumber}.pdf`, { type: 'application/pdf' });
+      // Simulate sending email and attachment
+        setTimeout(async () => {
+              setLoading(false);
+                onClose();
+                  alert("Simulated email sent successfully! In a real app, an email with PDF would be sent to " + recipientEmail);
+        }, 1000);
 
-      const formData = new FormData();
-      formData.append('pdf_file', pdfFile);
-      formData.append('recipientEmail', recipientEmail);
-
-      const response = await axios.post(
-        `http://localhost:8000/api/invoices/${invoice.invoiceNumber}/send_invoice/`,
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
-      if (response.data.message) {
-        alert(response.data.message);
-      } else {
-        alert("Email sent successfully");
-      }
-      onClose();
-    } catch (err) {
-      console.error('Error sending invoice:', err);
-      setError(`Error sending email. Please check the console for more details. ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   return (
     <Modal show={isOpen} onHide={onClose} size="lg" centered>

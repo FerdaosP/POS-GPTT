@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import InvoiceForm from "./InvoiceForm";
 import CustomerForm from "../components/CustomerForm";
 
-const InvoiceEntry = ({ customers, onSaveCustomer, invoices, onSaveInvoice }) => {
+const InvoiceEntry = ({ customers, onSaveCustomer, invoices, onSaveInvoice, companyInfo }) => {
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [mockInvoices, setMockInvoices] = useState([
+   const [mockInvoices, setMockInvoices] = useState([
         {
             invoiceNumber: 1,
             dateOfIssue: "2024-08-08",
@@ -88,6 +88,7 @@ const InvoiceEntry = ({ customers, onSaveCustomer, invoices, onSaveInvoice }) =>
                    onSaveInvoice={onSaveInvoice}
                  onAddCustomer={handleAddCustomer}
                    invoices={mockInvoices}
+                    companyInfo={companyInfo}
                   />
             )}
     </div>

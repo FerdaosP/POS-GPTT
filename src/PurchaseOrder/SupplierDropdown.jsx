@@ -10,22 +10,35 @@ const SupplierDropdown = ({ onChange, value }) => {
    const apiUrl = 'http://localhost:8000/api/suppliers/'; // URL to get suppliers
 
     useEffect(() => {
-        const fetchSuppliers = async () => {
             setLoading(true);
             setError(null);
-            try {
-                const response = await axios.get(apiUrl); // URL to fetch all the suppliers
-                setSuppliers(response.data);
-            } catch (err) {
-                console.error("Error fetching suppliers:", err);
-                setError("Error fetching suppliers. Please check the console.");
-            } finally {
-                setLoading(false);
-            }
-        };
+            // Mock suppliers data
+            const mockSuppliers = [
+                {
+                   id: 1,
+                    name: "Supplier A",
+                     address: "123 Main St",
+                    contactPerson: "John Doe",
+                    phone: "555-1234",
+                    email: "john.doe@example.com",
+                  vatNumber: "123456789",
+                },
+                {
+                    id: 2,
+                    name: "Supplier B",
+                      address: "456 Oak Ave",
+                    contactPerson: "Jane Smith",
+                      phone: "555-5678",
+                     email: "jane.smith@example.com",
+                      vatNumber: "987654321",
+                 },
+            ];
+            setTimeout(() => {
+              setSuppliers(mockSuppliers)
+             setLoading(false);
+           }, 200);
+    }, []); // Removed API URL
 
-        fetchSuppliers();
-    }, [apiUrl]); // Added apiUrl to dependency array
 
     if (loading) {
         return <option>Loading suppliers...</option>;

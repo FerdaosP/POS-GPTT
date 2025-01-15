@@ -16,20 +16,27 @@ const ItemSelectionModal = ({ isOpen, onClose, onItemSelect, items = [] }) => {
     const [showCategoryForm, setShowCategoryForm] = useState(false);
 
     useEffect(() => {
-        const fetchCategories = async () => {
-            setLoading(true);
+        setLoading(true);
             setError(null);
-            try {
-                const response = await axios.get('http://localhost:8000/api/services/category/');
-                 setCategories(JSON.parse(JSON.stringify(response.data)).map(item => ({id: item.category, name: item.category })));
-            } catch (err) {
-                console.error("Error fetching Categories", err);
-                setError("Error fetching categories. Check the console");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCategories();
+          const categoriesData = [
+                  {
+                    id: 1,
+                    name: "Products"
+                   },
+                  {
+                     id: 2,
+                   name: "Services"
+                   },
+                {
+                     id: 3,
+                      name: "Repairs"
+                 },
+             ];
+        setTimeout(() => {
+                setCategories(categoriesData);
+                 setLoading(false)
+           }, 200);
+
     }, []);
 
     const handleItemClick = (item) => {
@@ -88,10 +95,9 @@ const ItemSelectionModal = ({ isOpen, onClose, onItemSelect, items = [] }) => {
 
     const handleSaveCategory = async (category) => {
           try {
-                 await fetchCategories();
-              setSelectedCategory(category.name);
-               showNotification("Category created succesfully")
+                 showNotification("Category created succesfully")
                  setShowCategoryForm(false);
+                  setCategories(prev => ([...prev, {id: prev.length +1, ...category}]));
             } catch (err) {
                  console.error("Error creating category", err)
                    showNotification("Error creating category! Check the console", "error");
@@ -171,6 +177,7 @@ const ItemSelectionModal = ({ isOpen, onClose, onItemSelect, items = [] }) => {
                         <ItemForm
                             onSave={handleSaveItem}
                             onClose={handleCloseNewItemForm}
+                            categories={categories}
                         />
                     </Modal.Body>
                     <Modal.Footer>

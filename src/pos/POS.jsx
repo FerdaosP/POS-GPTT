@@ -37,34 +37,73 @@ const POS = () => {
 
 
     useEffect(() => {
-        const fetchCustomers = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                 const response = await axios.get('http://localhost:8000/api/customers/');
-                   setCustomers(response.data);
-            } catch (err) {
-                 console.error("Error fetching customers:", err);
-               setError("Error loading customer. Please check console.")
-           } finally {
-                setLoading(false);
-         }
-       };
-        fetchCustomers();
-          const fetchRepairs = async () => {
-            setLoading(true);
-            setError(null);
-              try {
-                const response = await axios.get('http://localhost:8000/api/repairs/');
-                   setRepairs(response.data);
-              } catch (err) {
-                console.error("Error fetching Repairs", err);
-                 setError("Error loading Repairs, check the console")
-              } finally {
-                  setLoading(false);
-              }
-        };
-        fetchRepairs();
+           setLoading(true);
+          setError(null);
+           // Mock customer data
+            const mockCustomers =  [
+              {
+                 id: 1,
+                  companyNumber: "123456",
+                 companyName: "Test Company",
+                firstName: "John",
+               lastName: "Doe",
+                 email: "john.doe@example.com",
+                 phone: "555-1234",
+                 street: "123 Main St",
+                postalCode: "12345",
+                city: "Anytown",
+                country: "USA",
+             },
+            {
+                id: 2,
+                 companyNumber: "987654",
+                  companyName: "Another Company",
+                firstName: "Jane",
+                lastName: "Smith",
+                email: "jane.smith@example.com",
+                 phone: "555-5678",
+               street: "456 Oak Ave",
+                 postalCode: "67890",
+                city: "Otherville",
+                country: "Canada",
+             },
+             {
+               id: 3,
+                 companyNumber: "555555",
+                  companyName: "Some Company",
+                firstName: "Peter",
+               lastName: "Pan",
+                email: "peter.pan@example.com",
+                phone: "555-4444",
+                street: "789 Neverland",
+                 postalCode: "33333",
+                city: "Neverland",
+                country: "Fantasy",
+              },
+          ];
+             const mockRepairs =  [
+                {
+                    repairTicketNumber: "REP-2024-001",
+                    deviceType: "iPhone 13",
+                   imei: "123456789012345",
+                    issueDescription: "Cracked screen",
+                     priceEstimate: 200,
+                   dateReceived: "2024-07-03",
+                 },
+              {
+                  repairTicketNumber: "REP-2024-002",
+                     deviceType: "Samsung S21",
+                    imei: "987654321098765",
+                   issueDescription: "Battery replacement",
+                   priceEstimate: 50,
+                    dateReceived: "2024-07-05",
+                 },
+             ]
+       setTimeout(() => {
+            setCustomers(mockCustomers);
+              setRepairs(mockRepairs);
+              setLoading(false);
+       }, 200);
       const handleClickOutside = (event) => {
         if (inputRef.current && !inputRef.current.contains(event.target)) {
           setShowDropdown(false);
@@ -403,6 +442,7 @@ const POS = () => {
                                isOpen={showManualItemModal}
                                onClose={handleCloseManualItemModal}
                                  onItemAdd={handleAddItem}
+                                  categories={categories}
                              />
                        )}
                      {showWarrantyModal && (

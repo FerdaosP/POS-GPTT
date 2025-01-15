@@ -58,31 +58,54 @@ const NewRepairEntry = ({companyInfo}) => {
     }, []);
 
      const fetchRepairs = async () => {
-        try {
-            const response = await axios.get(apiUrl);
-            setRepairs(JSON.parse(JSON.stringify(response.data)));
-        } catch (error) {
-            console.error("Error fetching repairs:", error);
-            showNotification("Error fetching repairs! Check the console.", "error");
-        }
-    };
+         setRepairs([
+           {
+                repairTicketNumber: "REP-2024-001",
+               customerName: "Test Customer 1",
+               phoneNumber: "555-1234",
+                deviceType: "iPhone 13",
+              repairStatus: "In Progress",
+                 dateReceived: "2024-07-03",
+                notes: "Test Note",
+            },
+           {
+                repairTicketNumber: "REP-2024-002",
+                customerName: "Test Customer 2",
+                 phoneNumber: "555-5678",
+                 deviceType: "Samsung S21",
+               repairStatus: "Received",
+                dateReceived: "2024-07-05",
+                notes: "Another Note",
+           },
+           {
+                 repairTicketNumber: "REP-2024-003",
+                 customerName: "Test Customer 1",
+                phoneNumber: "555-1234",
+               deviceType: "iPhone 11",
+               repairStatus: "Completed",
+                 dateReceived: "2024-07-07",
+               notes: "Yet Another Note",
+           }
+          ])
+     };
 
     const handleStatusUpdate = async (id, newStatus) => {
         setIsLoadingStatusUpdate(true);
-        try {
-            await axios.patch(`${apiUrl}${id}/`, { repairStatus: newStatus });
-             fetchRepairs();
-            addToHistory(id, "status_update", `Status updated to ${newStatus}`);
+            setRepairs(prev => {
+               return prev.map(repair => {
+                  if(repair.repairTicketNumber === id) {
+                      addToHistory(id, "status_update", `Status updated to ${newStatus}`);
+                        return {...repair, repairStatus: newStatus}
+                  }
+                    return repair
+                 })
+           })
+
             if (newStatus === "Completed") {
-                console.log(`Email sent to customer for ticket ${id}`);
-            }
+               console.log(`Email sent to customer for ticket ${id}`);
+             }
             showNotification("Status updated successfully!");
-        } catch (error) {
-            console.error("Error updating status:", error);
-            showNotification("Error updating status!", "error");
-        } finally {
-            setIsLoadingStatusUpdate(false);
-        }
+          setIsLoadingStatusUpdate(false);
     };
 
     const addToHistory = (repairId, action, details) => {
@@ -103,18 +126,11 @@ const NewRepairEntry = ({companyInfo}) => {
 
    const handleAddRepair = async (newRepairData) => {
         setIsLoadingAddRepair(true);
-          try {
-            await axios.post(apiUrl, newRepairData);
-            fetchRepairs();
-            addToHistory(newRepairData.repairTicketNumber, "created", "Repair ticket created");
-            showNotification("Repair added successfully!");
-            setShowAddRepairForm(false);
-         } catch (error) {
-             console.error("Error adding repair:", error);
-             showNotification("Error adding repair!", "error");
-         } finally {
-             setIsLoadingAddRepair(false);
-          }
+            setRepairs(prev => ([...prev, newRepairData]));
+           addToHistory(newRepairData.repairTicketNumber, "created", "Repair ticket created");
+          showNotification("Repair added successfully!");
+          setShowAddRepairForm(false);
+            setIsLoadingAddRepair(false);
       };
 
 
@@ -124,22 +140,22 @@ const NewRepairEntry = ({companyInfo}) => {
 
     const handleUpdateRepair = async (updatedRepair) => {
         setIsLoadingUpdate(true);
-        try {
-            await axios.put(`${apiUrl}${updatedRepair.repairTicketNumber}/`, updatedRepair);
-           fetchRepairs();
-            addToHistory(
-                updatedRepair.repairTicketNumber,
-                "updated",
-                "Repair ticket updated"
-            );
+        setRepairs(prev => {
+               return prev.map(repair => {
+                if (repair.repairTicketNumber === updatedRepair.repairTicketNumber){
+                    addToHistory(
+                        updatedRepair.repairTicketNumber,
+                        "updated",
+                        "Repair ticket updated"
+                    );
+                     return updatedRepair
+                }
+                return repair
+             })
+         })
             showNotification("Repair updated successfully!");
             setEditRepair(null);
-        } catch (error) {
-              console.error("Error updating repair:", error);
-            showNotification("Error updating repair!", "error");
-        } finally {
             setIsLoadingUpdate(false);
-        }
     };
 
 
@@ -149,34 +165,19 @@ const NewRepairEntry = ({companyInfo}) => {
 
     const handleDeleteRepair = async (repairId) => {
         setIsLoadingDelete(true);
-        try {
-           await axios.delete(`${apiUrl}${repairId}/`);
-            fetchRepairs();
+        setRepairs(prev => prev.filter(repair => repair.repairTicketNumber !== repairId));
             addToHistory(repairId, "deleted", "Repair ticket deleted");
             showNotification("Repair deleted successfully!");
             setDeleteRepairId(null);
-        } catch (error) {
-            console.error("Error deleting repair:", error);
-            showNotification("Error deleting repair!", "error");
-        } finally {
-            setIsLoadingDelete(false);
-        }
+        setIsLoadingDelete(false);
     };
      const handleBulkDelete = async () => {
         setIsLoadingBulkDelete(true);
-        try {
-               await Promise.all(selectedRepairs.map(async (id) => {
-                    await axios.delete(`${apiUrl}${id}/`);
-                }))
-               fetchRepairs();
+           setRepairs(prev => prev.filter(repair => !selectedRepairs.includes(repair.repairTicketNumber)));
               setSelectedRepairs([]);
-             showNotification("Repairs deleted successfully!");
-        } catch (error) {
-           console.error("Error deleting repair:", error);
-            showNotification("Error deleting repair!", "error");
-         } finally {
-           setIsLoadingBulkDelete(false);
-       }
+              showNotification("Repairs deleted successfully!");
+        setIsLoadingBulkDelete(false);
+
     };
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -357,7 +358,6 @@ const NewRepairEntry = ({companyInfo}) => {
                 </div>
             )}
 
-
             {notification && (
                 <Alert className={`mb-4 ${notification.type === 'error' ? 'bg-red-50' : 'bg-green-50'}`}>
                     <AlertCircle className={notification.type === 'error' ? 'text-red-500' : 'text-green-500'} />
@@ -435,7 +435,7 @@ const NewRepairEntry = ({companyInfo}) => {
                         <File size={16} />
                         <span>PDF</span>
                     </button>
-                    <button
+                     <button
                         onClick={handleBulkDelete}
                         className="bg-red-600 text-white px-4 py-2 rounded flex items-center space-x-2"
                         aria-label="Delete Selected"
@@ -488,6 +488,7 @@ const NewRepairEntry = ({companyInfo}) => {
                 isOpen={showAddRepairForm}
                 onClose={() => setShowAddRepairForm(false)}
                 onSave={handleAddRepair}
+                  companyInfo={companyInfo}
             />
             <EditRepairModal
                 repair={editRepair}

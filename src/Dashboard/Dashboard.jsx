@@ -26,25 +26,45 @@ const Dashboard = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const [metricsResponse, activityResponse] = await Promise.all([
-                    axios.get('http://localhost:8000/api/dashboard-metrics/'),
-                    axios.get('http://localhost:8000/api/dashboard-activity/'),
-                ]);
+        setLoading(true);
+        setError(null);
 
-                setMetrics(metricsResponse.data);
-                setActivity(activityResponse.data);
-            } catch (err) {
-                console.error("Error fetching dashboard data:", err);
-                setError("Error loading dashboard data. Please check the console.")
-            } finally {
-                setLoading(false)
+        // Mock dashboard data
+         const mockMetrics = {
+                totalRevenue: "1500.50",
+                revenueChange: 2.5,
+                outstandingInvoices: "300",
+                 outstandingChange: -1.2,
+              pendingInvoiceCount: 20,
+                activeCustomerCount: 120,
+                customerChange: 5,
+                 pendingRepairCount: 15,
+                 repairChange: -3,
             }
-        };
-        fetchData();
+            const mockActivity = [
+                {
+                    time: new Date().toISOString(),
+                    message: "New invoice created",
+                    details: "Invoice #1234 for customer John Doe created.",
+                },
+              {
+                    time: new Date(new Date().setDate(new Date().getDate() -1)).toISOString(),
+                   message: "Customer updated",
+                  details: "Customer Jane Smith updated details."
+              },
+              {
+                  time: new Date(new Date().setDate(new Date().getDate() - 2)).toISOString(),
+                   message: "New repair ticket",
+                   details: "Ticket #REP-2024-123 for iPhone 13"
+               }
+            ]
+
+
+        setTimeout(() => {
+            setMetrics(mockMetrics);
+            setActivity(mockActivity)
+           setLoading(false);
+       }, 500);
     }, []);
 
 

@@ -27,20 +27,14 @@ const AddSupplierModal = ({ isOpen, onClose, onSave }) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
-        try {
-            const response = await axios.post(apiUrl, form);
-            if(response.status === 201){
-                onSave(response.data);
-                showNotification("Supplier created successfully!");
-            } else {
-                setError("Error creating supplier. Please check console.")
-            }
-        } catch (err) {
-            console.error("Error creating supplier:", err);
-             setError("Error creating supplier. Please check console.");
-        } finally {
-            setLoading(false);
-        }
+
+           // Simulate adding supplier
+           setTimeout(() => {
+                onSave(form);
+             showNotification("Supplier created successfully!");
+              setLoading(false)
+           }, 1000);
+
     };
         const showNotification = (message, type = "success") => {
         setNotification({ message, type });

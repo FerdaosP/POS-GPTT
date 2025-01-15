@@ -61,6 +61,7 @@ const AddPurchaseOrderForm = ({ isOpen, onClose, onSave }) => {
 
         const finalForm = { ...form, totalAmount:totalAmount }
        onSave(finalForm);
+         onClose();
     };
 
 

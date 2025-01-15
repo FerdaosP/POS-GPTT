@@ -51,28 +51,77 @@ const InvoiceListEntry = ({companyInfo}) => {
     }, []);
 
      const fetchInvoices = async () => {
-        try {
-            const response = await axios.get(apiUrl);
-             setInvoices(JSON.parse(JSON.stringify(response.data)));
-        } catch (error) {
-            console.error("Error fetching invoices:", error);
-            showNotification("Error fetching invoices! Check the console.", "error");
-        }
+          setInvoices([
+            {
+             invoiceNumber: 1,
+                dateOfIssue: "2024-08-08",
+                billTo: "Test Customer 1",
+              billToEmail: "test1@test.com",
+              billToAddress: "123 Test Street, Testville, Testland",
+               billFrom: "Test Company",
+               billFromEmail: "test@test.com",
+              billFromAddress: "456 Test Street, Testtown, Testland",
+               notes: "Thanks for your business!",
+               total: "15.30",
+               subTotal: "15.00",
+              taxRate: "2.00",
+               taxAmmount: "0.30",
+              discountRate: "0.00",
+                discountAmmount: "0.00",
+              status: "Paid" ,
+             items: [
+                    {
+                        id: 0,
+                        name: "Test Item",
+                      description: "Test Item Description",
+                      price: "15.00",
+                        quantity: 1
+                     }
+                   ]
+             },
+        {
+            invoiceNumber: 2,
+             dateOfIssue: "2024-09-08",
+              billTo: "Test Customer 2",
+             billToEmail: "test2@test.com",
+             billToAddress: "789 Fake Street, Fakesville, Fakeland",
+             billFrom: "Test Company",
+              billFromEmail: "test@test.com",
+              billFromAddress: "456 Test Street, Testtown, Testland",
+             notes: "Thanks for your business!",
+             total: "32.20",
+               subTotal: "32.00",
+               taxRate: "0.00",
+             taxAmmount: "0.00",
+              discountRate: "0.00",
+              discountAmmount: "0.00",
+             status: "Sent" ,
+              items: [
+                    {
+                       id: 0,
+                      name: "Test Item 2",
+                        description: "Test Item Description 2",
+                       price: "32.00",
+                       quantity: 1
+                     }
+                   ]
+             },
+          ]);
     };
 
      const handleStatusUpdate = async (id, newStatus) => {
         setIsLoadingStatusUpdate(true);
-        try {
-            await axios.patch(`${apiUrl}${id}/`, { status: newStatus });
-            fetchInvoices();
-            addToHistory(id, "status_update", `Status updated to ${newStatus}`);
+         setInvoices(prev => {
+             return prev.map(invoice => {
+                 if(invoice.invoiceNumber === id){
+                    addToHistory(id, "status_update", `Status updated to ${newStatus}`);
+                    return {...invoice, status: newStatus};
+                  }
+               return invoice
+             })
+         })
            showNotification("Status updated successfully!");
-        } catch (error) {
-            console.error("Error updating status:", error);
-            showNotification("Error updating status!", "error");
-        } finally {
-            setIsLoadingStatusUpdate(false);
-        }
+           setIsLoadingStatusUpdate(false);
     };
 
     const addToHistory = (invoiceId, action, details) => {
@@ -93,19 +142,11 @@ const InvoiceListEntry = ({companyInfo}) => {
 
    const handleAddInvoice = async (newInvoiceData) => {
         setIsLoadingAddInvoice(true);
-          console.log('Invoice data before submit:', newInvoiceData);
-          try {
-            await axios.post(apiUrl, newInvoiceData);
-            fetchInvoices();
+            setInvoices(prev => ([...prev, newInvoiceData]));
             addToHistory(newInvoiceData.invoiceNumber, "created", "Invoice created");
             showNotification("Invoice added successfully!");
             setShowAddInvoiceForm(false);
-         } catch (error) {
-             console.error("Error adding invoice:", error);
-             showNotification("Error adding invoice!", "error");
-         } finally {
-             setIsLoadingAddInvoice(false);
-          }
+            setIsLoadingAddInvoice(false);
       };
 
 
@@ -115,22 +156,18 @@ const InvoiceListEntry = ({companyInfo}) => {
 
     const handleUpdateInvoice = async (updatedInvoice) => {
         setIsLoadingUpdate(true);
-        try {
-            await axios.put(`${apiUrl}${updatedInvoice.invoiceNumber}/`, updatedInvoice);
-           fetchInvoices();
-            addToHistory(
-                updatedInvoice.invoiceNumber,
-                "updated",
-                "Invoice updated"
-            );
+            setInvoices(prev => {
+                return prev.map(invoice => {
+                    if(invoice.invoiceNumber === updatedInvoice.invoiceNumber){
+                       addToHistory(updatedInvoice.invoiceNumber, "updated", "Invoice updated");
+                         return updatedInvoice
+                    }
+                     return invoice;
+                })
+           })
             showNotification("Invoice updated successfully!");
             setEditInvoice(null);
-        } catch (error) {
-              console.error("Error updating invoice:", error);
-            showNotification("Error updating invoice!", "error");
-        } finally {
             setIsLoadingUpdate(false);
-        }
     };
 
 
@@ -140,18 +177,11 @@ const InvoiceListEntry = ({companyInfo}) => {
 
     const handleDeleteInvoice = async (invoiceId) => {
         setIsLoadingDelete(true);
-        try {
-           await axios.delete(`${apiUrl}${invoiceId}/`);
-            fetchInvoices();
-            addToHistory(invoiceId, "deleted", "Invoice deleted");
-            showNotification("Invoice deleted successfully!");
-            setDeleteInvoiceId(null);
-        } catch (error) {
-            console.error("Error deleting invoice:", error);
-            showNotification("Error deleting invoice!", "error");
-        } finally {
-            setIsLoadingDelete(false);
-        }
+           setInvoices(prev => prev.filter(invoice => invoice.invoiceNumber !== invoiceId))
+             addToHistory(invoiceId, "deleted", "Invoice deleted");
+             showNotification("Invoice deleted successfully!");
+              setDeleteInvoiceId(null);
+        setIsLoadingDelete(false);
     };
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);

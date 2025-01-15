@@ -6,29 +6,16 @@ const ExportCustomersModal = ({ onClose }) => {
   const [loading, setLoading] = useState(false);
    const [error, setError] = useState(null);
 
-   const handleExport = async () => {
-     setError(null);
-    setLoading(true);
-     try {
-        const response = await axios.get('http://localhost:8000/api/customers/export_customers/', {
-              responseType: 'blob',
-              headers: { 'Content-Type': 'text/csv' },
-        });
-         const url = window.URL.createObjectURL(new Blob([response.data]));
-         const link = document.createElement('a');
-         link.href = url;
-         link.setAttribute('download', 'customers.csv');
-         document.body.appendChild(link);
-         link.click();
-          document.body.removeChild(link);
-         onClose();
-     } catch (err) {
-          console.error('Error exporting customers:', err);
-          setError("Error exporting Customers. Please check console")
-    } finally {
-        setLoading(false)
-    }
-  };
+    const handleExport = async () => {
+        setError(null);
+        setLoading(true);
+           // Simulate a download
+            setTimeout(() => {
+                setLoading(false);
+                  onClose();
+                alert("Simulated export completed! In a real app, a file would be downloaded");
+            }, 1000); // Simulate a 1 second delay
+    };
 
 
     return (

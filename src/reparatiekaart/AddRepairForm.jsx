@@ -50,20 +50,54 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
      const [depositAmount, setDepositAmount] = useState("");
 
     useEffect(() => {
-        const fetchCustomers = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                 const response = await axios.get('http://localhost:8000/api/customers/');
-                   setCustomers(response.data);
-              } catch (err) {
-                 console.error("Error fetching customers:", err);
-                 setError("Error loading customer. Please check console.")
-            } finally {
-                   setLoading(false);
-             }
-         };
-          fetchCustomers();
+           setLoading(true);
+           setError(null);
+           const mockCustomers =  [
+              {
+                 id: 1,
+                  companyNumber: "123456",
+                 companyName: "Test Company",
+                firstName: "John",
+               lastName: "Doe",
+                 email: "john.doe@example.com",
+                 phone: "555-1234",
+                 street: "123 Main St",
+                postalCode: "12345",
+                city: "Anytown",
+                country: "USA",
+             },
+            {
+                id: 2,
+                 companyNumber: "987654",
+                  companyName: "Another Company",
+                firstName: "Jane",
+                lastName: "Smith",
+                email: "jane.smith@example.com",
+                 phone: "555-5678",
+               street: "456 Oak Ave",
+                 postalCode: "67890",
+                city: "Otherville",
+                country: "Canada",
+             },
+             {
+               id: 3,
+                 companyNumber: "555555",
+                  companyName: "Some Company",
+                firstName: "Peter",
+               lastName: "Pan",
+                email: "peter.pan@example.com",
+                phone: "555-4444",
+                street: "789 Neverland",
+                 postalCode: "33333",
+                city: "Neverland",
+                country: "Fantasy",
+              },
+          ];
+        setTimeout(() => {
+            setCustomers(mockCustomers);
+            setLoading(false)
+        }, 200)
+
           const handleClickOutside = (event) => {
              if (inputRef.current && !inputRef.current.contains(event.target)) {
                 setShowDropdown(false);
@@ -208,57 +242,9 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
         setModalError("");
         setFieldErrors({});
         // Call the onSave function (passed from NewRepairEntry) to add the repair
-           try {
-               const formData = new FormData();
-                for (const key in newRepair) {
-                    if(key !== "attachments" ){
-                       if(key === "paymentStatus" && newRepair[key] === "Deposit"){
-                            formData.append(key, `${newRepair[key]} ${depositAmount}` || "");
-                       } else {
-                          formData.append(key, newRepair[key] || "");
-                       }
-                    }
-                }
-                if (newRepair.attachments && newRepair.attachments.length > 0) {
-                  newRepair.attachments.forEach((file) => {
-                   formData.append("attachments", file);
-                 });
-                }
-
-                await axios.post('http://localhost:8000/api/repairs/', formData, {
-                  headers: { 'Content-Type': 'multipart/form-data' },
-                 });
-                onSave();
-             } catch (error) {
-                console.error("Error saving repair", error);
-                setModalError(`Error creating repair, check console: ${error.message}`);
-          } finally {
-              // Reset the form state
-           setNewRepair({
-                repairTicketNumber: generateRepairID(),
-                paymentStatus: "Not Paid",
-                 repairStatus: "Received",
-                customer: null,
-                customerName: "",
-               phoneNumber: "",
-                deviceType: "",
-                imei: "",
-                accessCode: "",
-                usePattern: false,
-                pattern: "",
-                simCode: "",
-                issueDescription: "",
-                 priceEstimate: "",
-                repairTechnician: "",
-                dateReceived: new Date().toISOString().split("T")[0],
-               completionDate: "",
-                notes: "",
-                attachments: [],
-           });
-            setAttachmentPreviews([]);
-           onClose(); // Close the modal
-       }
-   };
+        onSave();
+        onClose(); // Close the modal
+    };
 
     const handlePatternSelect = (pattern) => {
         setNewRepair(prev => ({...prev, pattern: pattern}));
@@ -303,7 +289,7 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
                                     onChange={handleInputChange}
                                    name="customerName"
                                      onFocus={() => setShowDropdown(true)}
-                                    className={`border rounded p-2 w-full `}
+                                    className={`border rounded p-2 w-full max-w-full`}
                                 />
                                   {showDropdown &&  (
                                     <div
@@ -323,10 +309,10 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
                             </div>
                             <button
                                 type="button"
-                               onClick={handleAddCustomer}
-                              className="bg-blue-500 text-white px-4 py-2 rounded ml-2 "
-                              aria-label="Add Customer"
-                              >
+                                  onClick={handleAddCustomer}
+                                   className="bg-blue-500 text-white px-4 py-2 rounded ml-2 "
+                                     aria-label="Add Customer"
+                                 >
                                 <UserPlus size={16}/>
                             </button>
                        </div>

@@ -13,7 +13,7 @@ import CustomerDetails from "./components/CustomerDetails";
 import CustomerForm from "./components/CustomerForm";
 import POS from "./pos/POS";
 import Inventory from "./inventory/InventoryEntry";
-import PurchaseOrderEntry from "./PurchaseOrder/PurchaseOrderEntry"; // Import the new component
+import PurchaseOrderEntry from "./PurchaseOrder/PurchaseOrderEntry";
 
 
 const App = () => {
@@ -24,61 +24,76 @@ const App = () => {
         email: "",
         vatNumber: ""
     });
+     const useMockData = true; //mock data flag here
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [apiBaseUrl, setApiBaseUrl] = useState("http://localhost:8000");
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                // Use the dynamic API base URL here
-                const response = await axios.get(`${apiBaseUrl}/api/profile/1/`);
-                if (response.data) {
-                    setCompanyInfo(response.data);
+       const fetchProfile = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+              let response;
+             if (useMockData) {
+                    response = {
+                      data:{
+                             companyName: "Your Company Name",
+                             address: "Your Company Address",
+                            phoneNumber: "",
+                            email: "company@email.com",
+                            vatNumber: "",
+                            print_layout: "<div style=\"font-family: monospace;\">   <h2 style=\"text-align: center; font-size: 16pt; font-weight: bold; margin-bottom: 5mm;\">{{ companyName }}</h2> <div style=\"font-family: monospace;\"> <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Ticket #</strong> {{ repairTicketNumber }}</p>   <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Customer:</strong> {{ customerName }}</p> <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Phone:</strong> {{ phoneNumber }}</p>  <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Device:</strong> {{ deviceType }}</p> <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>IMEI:</strong> {{ imei }}</p>  <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Issue:</strong> {{ issueDescription }}</p>  <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Technician:</strong> {{ repairTechnician }}</p>   <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Price:</strong> {{ priceEstimate }}</p>   <p style=\"font-size: 12pt; margin: 2mm 0;\"><strong>Date:</strong> {{ dateReceived }}</p> </div>  <p style=\"text-align: center; font-size: 14pt; margin-top: 5mm;\">*{{ repairTicketNumber }}*</p>  <p style=\"text-align: center; font-size: 12pt; margin-top: 5mm;\">Thank you!</p>  <div style=\"font-size: 10pt; margin-top: 5mm; font-family: monospace;\"> {{ termsAndConditions }}</div> </div>",
+                             emailTemplate: "<p>Dear {{ invoice.billTo }},</p> <p>I hope this message finds you well.</p> <p>Please find your invoice #{{ invoice.invoiceNumber }} attached to this email. If you have any questions or need further assistance, feel free to reach out to us.</p> <p>Thank you for your business, and we look forward to serving you again!</p> <p>Best regards,</p>   <p> {{ profile.companyName }}</p> <p> {{ profile.address }}</p>  <p> {{ profile.phoneNumber }}</p>  <p> {{ profile.email }}</p>"
+                          }
+                    }
+               } else {
+                   response = await axios.get(`${apiBaseUrl}/api/profile/1/`);
+                }
+
+                 if (response.data) {
+                   setCompanyInfo(response.data);
                 }
             } catch (err) {
                 if (err.response && err.response.status === 404) {
                     try {
                         const createResponse = await axios.post(`${apiBaseUrl}/api/profile/`, {
-                            companyName: "Your Company Name",
+                             companyName: "Your Company Name",
                             address: "Your Company Address",
                             phoneNumber: "",
-                            email: "company@email.com",
+                           email: "company@email.com",
                             vatNumber: ""
-                        });
-                        if (createResponse.data) {
-                            setCompanyInfo(createResponse.data);
+                         });
+                         if (createResponse.data) {
+                           setCompanyInfo(createResponse.data);
                         } else {
-                            setError(`There was an error creating default profile: ${createResponse.statusText}`);
+                           setError(`There was an error creating default profile: ${createResponse.statusText}`);
                         }
-                    } catch (createError) {
-                        setError(`There was an error creating default profile: ${createError.message}`);
-                        console.error('There was an error creating default profile:', createError);
+                     } catch (createError) {
+                       setError(`There was an error creating default profile: ${createError.message}`);
+                       console.error('There was an error creating default profile:', createError);
                     }
-                    console.warn('No profile found, creating a default one');
+                     console.warn('No profile found, creating a default one');
                 } else {
                     console.error('There was an error getting profile data:', err);
-                    setError(`There was an error getting profile data: ${err.message}`);
-                }
-            } finally {
-                setLoading(false);
-            }
+                     setError(`There was an error getting profile data: ${err.message}`);
+               }
+          } finally {
+               setLoading(false);
+          }
         };
-
-        const determineApiUrl = () => {
-            // Check if the app is running on localhost or on a local network
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            if (isLocal) {
+          const determineApiUrl = () => {
+             // Check if the app is running on localhost or on a local network
+             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+              if (isLocal) {
                 setApiBaseUrl("http://localhost:8000");
-            } else {
-                // Get the URL and replace the port for local network
-                const localNetworkAddress = window.location.origin.replace(':5173', ':8000');
-                setApiBaseUrl(localNetworkAddress);
+               } else {
+               // Get the URL and replace the port for local network
+               const localNetworkAddress = window.location.origin.replace(':5173', ':8000');
+               setApiBaseUrl(localNetworkAddress);
             }
             console.log("API Base URL:", apiBaseUrl); // Debugging: Log the API base URL
-        };
+         };
 
         determineApiUrl();
         fetchProfile();
@@ -111,7 +126,7 @@ const App = () => {
                             />
                             <Route
                                 path="/customers"
-                                element={<CustomerList />}
+                                element={<CustomerList useMockData={useMockData} />}
                             />
                             <Route
                                 path="/customers/:customerId"

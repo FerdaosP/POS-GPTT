@@ -19,26 +19,14 @@ const ImportCustomersModal = ({ onClose }) => {
     }
       setError(null);
       setLoading(true);
-      const formData = new FormData();
-       formData.append('file', file);
-        try {
-            const response = await axios.post('http://localhost:8000/api/customers/import_customers/', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
-          if(response.status === 201){
-                onClose();
-               alert("Customers imported succesfully")
-            } else {
-              setError("Error importing Customers. Please check console")
-             }
-        } catch (err) {
-             console.error('Error importing customers', err);
-             setError("Error importing Customers. Please check console")
-        } finally {
-             setLoading(false)
-         }
+
+        // Simulate an import
+        setTimeout(() => {
+            setLoading(false);
+            onClose();
+            alert("Simulated import completed! In a real app, data from CSV would be imported.");
+        }, 1000);
+
     };
 
     return (

@@ -58,23 +58,52 @@ const PurchaseOrderEntry = () => {
 
 
     const fetchPurchaseOrders = async () => {
-        try {
-            const response = await axios.get(apiUrl);
-            setPurchaseOrders(JSON.parse(JSON.stringify(response.data)));
-        } catch (error) {
-            console.error("Error fetching purchase orders:", error);
-            showNotification("Error fetching purchase orders! Check the console.", "error");
-        }
+         setPurchaseOrders([
+                {
+                  poNumber: "PO-2024-001",
+                  supplierName: "Supplier A",
+                  poDate: "2024-07-01",
+                   totalAmount: 1200,
+                 status: "Draft"
+               },
+               {
+                    poNumber: "PO-2024-002",
+                    supplierName: "Supplier B",
+                     poDate: "2024-07-03",
+                   totalAmount: 2000,
+                  status: "Sent"
+                 },
+                   {
+                      poNumber: "PO-2024-003",
+                      supplierName: "Supplier A",
+                    poDate: "2024-07-08",
+                     totalAmount: 2500,
+                     status: "Received"
+                 },
+            ]);
     };
       const fetchSuppliers = useCallback(async () => {
-          try {
-                const response = await axios.get(supplierApiUrl);
-                setSuppliers(response.data);
-             } catch (error) {
-                console.error("Error fetching suppliers:", error);
-                 showNotification("Error fetching suppliers! Check the console.", "error");
-             }
-        }, [supplierApiUrl]);
+            setSuppliers([
+                {
+                   id: 1,
+                    name: "Supplier A",
+                     address: "123 Main St",
+                    contactPerson: "John Doe",
+                    phone: "555-1234",
+                    email: "john.doe@example.com",
+                  vatNumber: "123456789",
+                },
+                {
+                    id: 2,
+                    name: "Supplier B",
+                      address: "456 Oak Ave",
+                    contactPerson: "Jane Smith",
+                      phone: "555-5678",
+                     email: "jane.smith@example.com",
+                      vatNumber: "987654321",
+                 },
+            ])
+        }, []);
 
     const showNotification = (message, type = "success") => {
         setNotification({ message, type });
@@ -83,53 +112,26 @@ const PurchaseOrderEntry = () => {
 
        const handleAddPurchaseOrder = async (newPurchaseOrderData) => {
            setIsLoadingAddPurchaseOrder(true);
-         try {
-             await axios.post(apiUrl, newPurchaseOrderData);
-              fetchPurchaseOrders();
-            showNotification("Purchase order added successfully!");
-            setShowAddPurchaseOrderForm(false);
-         } catch (error) {
-            console.error("Error adding purchase order:", error);
-           showNotification("Error adding purchase order!", "error");
-          } finally {
-               setIsLoadingAddPurchaseOrder(false);
-         }
+             setPurchaseOrders(prev => ([...prev, newPurchaseOrderData]));
+              showNotification("Purchase order added successfully!");
+               setShowAddPurchaseOrderForm(false);
+             setIsLoadingAddPurchaseOrder(false);
        };
        
     const handleAddSupplier = async (newSupplier) => {
-             try {
-                await axios.post(supplierApiUrl, newSupplier);
+              setSuppliers(prev => ([...prev, newSupplier]));
                 showNotification("Supplier added successfully!");
-                 await fetchSuppliers()
                  setShowAddSupplierModal(false);
-             } catch (error) {
-                console.error("Error adding supplier:", error);
-                showNotification("Error adding supplier!", "error");
-             }
       };
 
       const handleEditSupplier = async (updatedSupplier) => {
-        try {
-            if (!updatedSupplier.id) {
-                throw new Error("Supplier ID is missing.");
-            }
-             await axios.put(`${supplierApiUrl}${updatedSupplier.id}/`, updatedSupplier);
+          setSuppliers(prev => prev.map(supplier => supplier.id === updatedSupplier.id ? updatedSupplier : supplier));
             showNotification("Supplier updated successfully!");
-              await fetchSuppliers();
-        } catch (err) {
-            console.error("Error updating supplier", err);
-            showNotification("Error updating supplier! Check the console", "error");
-        }
-    };
-      const handleDeleteSupplier = async (supplierId) => {
-        try {
-             await axios.delete(`${supplierApiUrl}${supplierId}/`); // Use category name in the URL
+      };
+
+    const handleDeleteSupplier = async (supplierId) => {
+           setSuppliers(prev => prev.filter(supplier => supplier.id !== supplierId))
             showNotification("Supplier deleted successfully!");
-              await fetchSuppliers();
-        } catch (err) {
-            console.error("Error deleting supplier", err);
-            showNotification("Error deleting supplier! Check the console", "error");
-        }
     };
     
     const handleEdit = (purchaseOrder) => {
@@ -138,17 +140,17 @@ const PurchaseOrderEntry = () => {
 
     const handleUpdatePurchaseOrder = async (updatedPurchaseOrder) => {
            setIsLoadingUpdate(true);
-          try {
-           await axios.put(`${apiUrl}${updatedPurchaseOrder.poNumber}/`, updatedPurchaseOrder);
-              fetchPurchaseOrders();
-              showNotification("Purchase order updated successfully!");
+            setPurchaseOrders(prev => {
+              return prev.map(purchaseOrder => {
+                 if(purchaseOrder.poNumber === updatedPurchaseOrder.poNumber) {
+                        return updatedPurchaseOrder
+                     }
+                   return purchaseOrder;
+              })
+          })
+               showNotification("Purchase order updated successfully!");
              setEditPurchaseOrder(null);
-          } catch (error) {
-                console.error("Error updating purchase order:", error);
-            showNotification("Error updating purchase order!", "error");
-          } finally {
              setIsLoadingUpdate(false);
-         }
     };
 
     const confirmDeletePurchaseOrder = (purchaseOrderId) => {
@@ -157,48 +159,32 @@ const PurchaseOrderEntry = () => {
 
       const handleBulkDelete = async () => {
         setIsLoadingBulkDelete(true);
-        try {
-               await Promise.all(selectedPurchaseOrders.map(async (id) => {
-                    await axios.delete(`${apiUrl}${id}/`);
-                }))
-              fetchPurchaseOrders();
-             setSelectedPurchaseOrders([]);
-             showNotification("Purchase orders deleted successfully!");
-         } catch (error) {
-            console.error("Error deleting purchase order:", error);
-            showNotification("Error deleting purchase order!", "error");
-         } finally {
+          setPurchaseOrders(prev => prev.filter(po => !selectedPurchaseOrders.includes(po.poNumber)));
+              setSelectedPurchaseOrders([]);
+              showNotification("Purchase orders deleted successfully!");
              setIsLoadingBulkDelete(false);
-       }
     };
 
     const handleDeletePurchaseOrder = async (purchaseOrderId) => {
        setIsLoadingDelete(true);
-        try {
-          await axios.delete(`${apiUrl}${purchaseOrderId}/`);
-             fetchPurchaseOrders();
-            showNotification("Purchase order deleted successfully!");
-             setDeletePurchaseOrderId(null);
-        } catch (error) {
-             console.error("Error deleting purchase order:", error);
-           showNotification("Error deleting purchase order!", "error");
-        } finally {
-             setIsLoadingDelete(false);
-        }
+          setPurchaseOrders(prev => prev.filter(po => po.poNumber !== purchaseOrderId));
+          showNotification("Purchase order deleted successfully!");
+            setDeletePurchaseOrderId(null);
+           setIsLoadingDelete(false);
     };
     
     const handleStatusUpdate = async (purchaseOrderId, newStatus) => {
        setIsLoadingStatusUpdate(true);
-         try {
-             await axios.patch(`${apiUrl}${purchaseOrderId}/`, { status: newStatus });
-            fetchPurchaseOrders();
+           setPurchaseOrders(prev => {
+                return prev.map(po => {
+                   if(po.poNumber === purchaseOrderId){
+                        return {...po, status: newStatus}
+                    }
+                      return po
+              })
+            })
             showNotification("Status updated successfully!");
-         } catch (error) {
-            console.error("Error updating status:", error);
-             showNotification("Error updating status!", "error");
-        } finally {
             setIsLoadingStatusUpdate(false);
-        }
     };
     const handleSearch = (e) => {
         setSearchTerm(e.target.value);
@@ -309,6 +295,28 @@ const PurchaseOrderEntry = () => {
          setSelectedPurchaseOrders(prev => prev.filter(id => id !== purchaseOrderId));
       }
   };
+    const handleOpenSupplierList = () => {
+         setShowViewSupplierModal(true);
+         setShowAddSupplierModal(false);
+     };
+    const handleCancelSupplierList = () => {
+        setShowViewSupplierModal(false);
+          setShowAddSupplierModal(false);
+    };
+
+     const handleToggleAddSupplierForm = () => {
+       setShowAddSupplierModal((prev) => !prev);
+    };
+    const handleViewPurchaseOrder = (purchaseOrder) => {
+         setSelectedPurchaseOrder(purchaseOrder);
+       setShowViewPurchaseOrderModal(true);
+   };
+      const handleCloseViewPurchaseOrderModal = () => {
+        setSelectedPurchaseOrder(null);
+        setShowViewPurchaseOrderModal(false);
+    };
+
+
     const filteredPurchaseOrders = purchaseOrders.filter((po) => {
         return (
             (po.poNumber
@@ -339,26 +347,8 @@ const PurchaseOrderEntry = () => {
         (currentPage - 1) * itemsPerPage,
         currentPage * itemsPerPage
     );
-     const handleOpenSupplierList = () => {
-         setShowViewSupplierModal(true);
-         setShowAddSupplierModal(false);
-     };
-    const handleCancelSupplierList = () => {
-        setShowViewSupplierModal(false);
-          setShowAddSupplierModal(false);
-    };
 
-     const handleToggleAddSupplierForm = () => {
-       setShowAddSupplierModal((prev) => !prev);
-    };
-    const handleViewPurchaseOrder = (purchaseOrder) => {
-         setSelectedPurchaseOrder(purchaseOrder);
-       setShowViewPurchaseOrderModal(true);
-   };
-      const handleCloseViewPurchaseOrderModal = () => {
-        setSelectedPurchaseOrder(null);
-        setShowViewPurchaseOrderModal(false);
-    };
+      const filteredPaginatedPurchaseOrders = paginatedPurchaseOrders;
 
 
     return (
@@ -411,7 +401,7 @@ const PurchaseOrderEntry = () => {
             </div>
               {/* Purchase Order List */}
                 <PurchaseOrderList
-                    purchaseOrders={paginatedPurchaseOrders}
+                    purchaseOrders={filteredPaginatedPurchaseOrders}
                     onPageChange={setCurrentPage}
                    onDelete={confirmDeletePurchaseOrder}
                    onEdit={handleEdit}

@@ -19,17 +19,14 @@ const CategoryForm = ({ isOpen, onClose, onSave }) => {
          e.preventDefault();
          setLoading(true);
          setError(null);
-         try {
-               const response = await axios.post('http://localhost:8000/api/services/category/', form);
-              if (response.status === 201) {
-                  onSave(form);
-                 }
-            } catch (err) {
-                console.error("Error saving category", err);
-                  setError("Error Saving Category")
-             } finally {
-               setLoading(false);
-             }
+
+             // Simulate saving category
+            setTimeout(() => {
+                setLoading(false)
+                onSave(form)
+                  alert("Category saved! In a real app, data would be sent to the API.")
+            }, 1000)
+
        };
 
     return (

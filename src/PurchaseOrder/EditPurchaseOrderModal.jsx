@@ -76,6 +76,7 @@ const EditPurchaseOrderModal = ({ isOpen, onClose, onSave, purchaseOrder }) => {
 
         const finalForm = { ...form, totalAmount:totalAmount }
        onSave(finalForm);
+         onClose();
     };
       if (loading) {
           return <div>Loading categories...</div>

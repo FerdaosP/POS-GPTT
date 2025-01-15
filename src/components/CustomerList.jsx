@@ -12,7 +12,7 @@ import CustomerForm from "./CustomerForm";
 import EditCustomerModal from "./EditCustomerModal";
 import AddRepairForm from "../reparatiekaart/AddRepairForm";
 
-const CustomerList = ({}) => {
+const CustomerList = ({useMockData}) => {
     const [customers, setCustomers] = useState([]);
     const [showAddCustomerForm, setShowAddCustomerForm] = useState(false);
     const [isLoadingAddCustomer, setIsLoadingAddCustomer] = useState(false);
@@ -49,6 +49,22 @@ const CustomerList = ({}) => {
     }, []);
 
     const fetchCustomerSegments = async () => {
+       if(useMockData){
+         setCustomerSegments([
+            {
+                id: 1,
+                name: "Retail"
+             },
+            {
+                id: 2,
+               name: "Wholesale",
+            },
+             {
+                id: 3,
+              name: "Repair"
+            }
+           ]);
+       }else{
         try {
             const response = await axios.get(segmentApiUrl);
             setCustomerSegments(JSON.parse(JSON.stringify(response.data)));
@@ -56,8 +72,55 @@ const CustomerList = ({}) => {
             console.error("Error fetching customer segments", err)
             showNotification("Error fetching segments! Check the console", "error");
         }
+       }
     }
     const fetchCustomers = async () => {
+        if(useMockData){
+          setCustomers([
+              {
+                 id: 1,
+                  companyNumber: "123456",
+                 companyName: "Test Company",
+                firstName: "John",
+               lastName: "Doe",
+                 email: "john.doe@example.com",
+                 phone: "555-1234",
+                 street: "123 Main St",
+                postalCode: "12345",
+                city: "Anytown",
+                country: "USA",
+                segments: [1,2],
+             },
+            {
+                id: 2,
+                 companyNumber: "987654",
+                  companyName: "Another Company",
+                firstName: "Jane",
+                lastName: "Smith",
+                email: "jane.smith@example.com",
+                 phone: "555-5678",
+               street: "456 Oak Ave",
+                 postalCode: "67890",
+                city: "Otherville",
+                country: "Canada",
+                 segments: [2,3],
+             },
+             {
+               id: 3,
+                 companyNumber: "555555",
+                  companyName: "Some Company",
+                firstName: "Peter",
+               lastName: "Pan",
+                email: "peter.pan@example.com",
+                phone: "555-4444",
+                street: "789 Neverland",
+                 postalCode: "33333",
+                city: "Neverland",
+                country: "Fantasy",
+                 segments: [1],
+              },
+          ]);
+       } else{
         try {
             const response = await axios.get(apiUrl);
             setCustomers(JSON.parse(JSON.stringify(response.data)));
@@ -65,6 +128,7 @@ const CustomerList = ({}) => {
             console.error("Error fetching customers:", error);
             showNotification("Error fetching customers! Check the console.", "error");
         }
+      }
     };
 
 
@@ -74,17 +138,25 @@ const CustomerList = ({}) => {
     };
     const handleAddCustomer = async (newCustomerData) => {
         setIsLoadingAddCustomer(true);
-        try {
+        if(useMockData){
+             setCustomers(prev => ([...prev, newCustomerData]));
+              showNotification("Customer added successfully!");
+              setShowAddCustomerForm(false);
+        } else {
+           try {
             await axios.post(apiUrl, newCustomerData);
             fetchCustomers();
-            showNotification("Customer added successfully!");
-            setShowAddCustomerForm(false);
-        } catch (error) {
-            console.error("Error adding customer:", error);
-            showNotification("Error adding customer!", "error");
-        } finally {
-            setIsLoadingAddCustomer(false);
-        }
+             showNotification("Customer added successfully!");
+             setShowAddCustomerForm(false);
+          } catch (error) {
+             console.error("Error adding customer:", error);
+             showNotification("Error adding customer!", "error");
+            } finally {
+             setIsLoadingAddCustomer(false);
+          }
+       }
+
+          setIsLoadingAddCustomer(false);
     };
 
     const handleEdit = (customer) => {
@@ -94,34 +166,49 @@ const CustomerList = ({}) => {
 
     const handleUpdateCustomer = async (updatedCustomer) => {
         setIsLoadingUpdate(true);
-        try {
-            await axios.put(`${apiUrl}${updatedCustomer.id}/`, updatedCustomer);
-            fetchCustomers();
-            showNotification("Customer updated successfully!");
-            setEditCustomer(null);
-        } catch (error) {
-            console.error("Error updating customer:", error);
-            showNotification("Error updating customer!", "error");
-        } finally {
-            setIsLoadingUpdate(false);
+          if(useMockData){
+              const newCustomers = customers.map(item => item.id === updatedCustomer.id ? updatedCustomer : item);
+                setCustomers(newCustomers)
+              showNotification("Customer updated successfully!");
+              setEditCustomer(null);
+            } else {
+                try {
+                await axios.put(`${apiUrl}${updatedCustomer.id}/`, updatedCustomer);
+                fetchCustomers();
+               showNotification("Customer updated successfully!");
+               setEditCustomer(null);
+             } catch (error) {
+              console.error("Error updating customer:", error);
+                showNotification("Error updating customer!", "error");
+           } finally {
+              setIsLoadingUpdate(false);
+            }
         }
+        setIsLoadingUpdate(false);
     };
     const confirmDeleteCustomer = (customerId) =>
         setDeleteCustomerId(customerId);
 
     const handleDeleteCustomer = async (customerId) => {
         setIsLoadingDelete(true);
-        try {
-            await axios.delete(`${apiUrl}${customerId}/`);
-            fetchCustomers();
-            showNotification("Customer deleted successfully!");
-            setDeleteCustomerId(null);
-        } catch (error) {
-            console.error("Error deleting customer:", error);
-            showNotification("Error deleting customer!", "error");
-        } finally {
-            setIsLoadingDelete(false);
+        if(useMockData){
+             setCustomers(prev => prev.filter(item => item.id !== customerId))
+             showNotification("Customer deleted successfully!");
+             setDeleteCustomerId(null);
+       }else {
+            try {
+                await axios.delete(`${apiUrl}${customerId}/`);
+                fetchCustomers();
+               showNotification("Customer deleted successfully!");
+               setDeleteCustomerId(null);
+           } catch (error) {
+                 console.error("Error deleting customer:", error);
+                 showNotification("Error deleting customer!", "error");
+           } finally {
+                 setIsLoadingDelete(false);
+            }
         }
+        setIsLoadingDelete(false);
     };
 
     const handleSearch = (e) => {
@@ -315,18 +402,42 @@ const CustomerList = ({}) => {
     const handleViewRepairs = async (customer) => {
         setLoadingRepairs(true);
         setErrorRepairs(null);
-        try {
-            const response = await axios.get(`http://localhost:8000/api/repairs/?customer=${customer.id}`);
-            setSelectedCustomerRepairs(response.data);
-            setSelectedCustomer(customer);
-            setShowRepairHistory(true);
-        } catch (err) {
-            console.error('There was an error loading repairs', err);
-            setErrorRepairs(`There was an error loading repairs: ${err.message}`);
-            showNotification(`There was an error loading repairs: ${err.message}`, "error")
-        } finally {
-            setLoadingRepairs(false);
-        }
+          if(useMockData){
+                setSelectedCustomerRepairs([
+                 {
+                  repairTicketNumber: "REP-2024-001",
+                  deviceType: "iPhone 13",
+                   imei: "123456789012345",
+                   issueDescription: "Cracked screen",
+                    repairStatus: "In Progress",
+                    dateReceived: "2024-07-03",
+                 },
+                {
+                    repairTicketNumber: "REP-2024-002",
+                     deviceType: "Samsung S21",
+                    imei: "987654321098765",
+                   issueDescription: "Battery replacement",
+                   repairStatus: "Completed",
+                  dateReceived: "2024-07-05",
+                 },
+             ]);
+               setSelectedCustomer(customer);
+                setShowRepairHistory(true);
+                 setLoadingRepairs(false);
+              } else{
+                  try {
+                    const response = await axios.get(`http://localhost:8000/api/repairs/?customer=${customer.id}`);
+                     setSelectedCustomerRepairs(response.data);
+                       setSelectedCustomer(customer);
+                     setShowRepairHistory(true);
+               } catch (err) {
+                   console.error('There was an error loading repairs', err);
+                    setErrorRepairs(`There was an error loading repairs: ${err.message}`);
+                    showNotification(`There was an error loading repairs: ${err.message}`, "error")
+                } finally {
+                   setLoadingRepairs(false);
+                 }
+            }
     };
     const handleCloseRepairs = () => {
         setShowRepairHistory(false);

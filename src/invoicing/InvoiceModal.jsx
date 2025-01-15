@@ -298,20 +298,13 @@ class InvoiceModal extends React.Component {
           const formData = new FormData();
           formData.append('pdf_file', pdfFile);
           formData.append('recipientEmail', this.state.recipientEmail);
-  
-          const response = await axios.post(
-              `http://localhost:8000/api/invoices/${info.invoiceNumber}/send_invoice/`,
-              formData,
-              { headers: { 'Content-Type': 'multipart/form-data' } }
-          );
-          if (response.data.message) {
-              alert(response.data.message);
-          } else {
-              alert("Email sent successfully");
-          }
-          this.setState({ loading: false });
-          this.props.onSaveInvoice(info);
-          this.props.closeModal();
+         // Simulate sending a PDF
+            setTimeout(() => {
+                 this.setState({ loading: false });
+                 this.props.onSaveInvoice(info);
+                this.props.closeModal();
+               alert("Simulated email sent successfully! In a real app, an email with PDF would be sent.");
+            }, 1000);
       } catch (err) {
           console.error('Error sending invoice:', err);
           this.setState({ error: `Error sending email. Please check the console for more details. ${err.message}` });

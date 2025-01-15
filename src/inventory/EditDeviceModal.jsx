@@ -17,25 +17,28 @@ const EditDeviceModal = ({ isOpen, onClose, onSave, initialItem }) => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const fetchCategories = async () => {
-             setLoading(true);
+         setLoading(true);
             setError(null);
-            try {
-                const response = await axios.get('http://localhost:8000/api/service-categories/');
-                 const categoriesData = response.data.map(item => ({
-                id: item.id,
-                name: item.name
-                 }));
-                setCategories(categoriesData);
+           //mocked categories
+            const categoriesData = [
+                 {
+                id: 1,
+                name: "Category A"
+                },
+                 {
+                  id: 2,
+                 name: "Category B"
+                },
+                {
+                    id: 3,
+                   name: "Category C"
+                }
+            ];
 
-            } catch (err) {
-                console.error("Error fetching Categories", err);
-                setError("Error fetching categories. Check the console");
-            } finally {
-                  setLoading(false);
-            }
-         };
-          fetchCategories();
+           setTimeout(() => {
+              setCategories(categoriesData)
+              setLoading(false)
+         }, 200)
     }, []);
 
     const handleChange = (e) => {
