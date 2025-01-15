@@ -1,3 +1,5 @@
+import React from "react";
+
 const DeviceList = ({ devices = [], onEditItem, onDelete }) => {
     return (
         <div className="mb-6 overflow-x-auto">
@@ -15,6 +17,7 @@ const DeviceList = ({ devices = [], onEditItem, onDelete }) => {
                                 <th className="cursor-pointer py-2 px-4">Quantity</th>
                                  <th className="cursor-pointer py-2 px-4">IMEI</th>
                                 <th className="cursor-pointer py-2 px-4">Storage</th>
+                                <th className="cursor-pointer py-2 px-4">Serial Number</th>
                                 <th className="py-2 px-4">Actions</th>
                             </tr>
                         </thead>
@@ -27,6 +30,7 @@ const DeviceList = ({ devices = [], onEditItem, onDelete }) => {
                                     <td className="border px-4 py-2">{device.quantity_on_hand}</td>
                                       <td className="border px-4 py-2">{device.imei}</td>
                                        <td className="border px-4 py-2">{device.storage}</td>
+                                       <td className="border px-4 py-2">{device.serial_number}</td>
                                     <td className="border px-4 py-2">
                                        <button
                                             onClick={() => onEditItem(device)}
@@ -37,7 +41,7 @@ const DeviceList = ({ devices = [], onEditItem, onDelete }) => {
                                             Edit
                                         </button>
                                         <button
-                                            onClick={() => onDelete(device.imei)} /* Use device.imei here */
+                                            onClick={() => onDelete(device.imei)}
                                             className="text-red-500 hover:text-red-700"
                                             aria-label="Delete"
                                         >

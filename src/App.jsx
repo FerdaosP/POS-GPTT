@@ -1,3 +1,5 @@
+// File: /src/App.jsx
+
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
@@ -10,7 +12,9 @@ import Dashboard from "./Dashboard/Dashboard";
 import CustomerDetails from "./components/CustomerDetails";
 import CustomerForm from "./components/CustomerForm";
 import POS from "./pos/POS";
-import Inventory from "./inventory/InventoryEntry"
+import Inventory from "./inventory/InventoryEntry";
+import PurchaseOrderEntry from "./PurchaseOrder/PurchaseOrderEntry"; // Import the new component
+
 
 const App = () => {
     const [companyInfo, setCompanyInfo] = useState({
@@ -125,6 +129,10 @@ const App = () => {
                                 path="/repair-tickets"
                                 element={<NewRepairEntry companyInfo={companyInfo} />}
                             />
+                             <Route
+                                path="/purchase-orders"
+                                element={<PurchaseOrderEntry />}
+                            />
                             <Route
                                 path="/pos"
                                 element={<POS />}
@@ -133,9 +141,9 @@ const App = () => {
                                 path="/invoices/settings"
                                 element={<SettingsForm initialSettings={companyInfo} onSave={handleSaveCompanyInfo} />}
                             />
-                            <Route path="/inventory" 
+                            <Route path="/inventory"
                             element={<Inventory/>} />
-                                
+
                             <Route path="/reports" element={<p>Reports</p>} />
                         </Routes>
                     )}

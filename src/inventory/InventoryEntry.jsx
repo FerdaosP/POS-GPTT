@@ -262,7 +262,8 @@ const InventoryEntry = () => {
                 "Price",
                 "Quantity On Hand",
                 "IMEI",
-                 "Storage"
+                 "Storage",
+                 "Serial Number"
            ].join(","),
             ...itemsToExport.map(item =>
             activeList === "items" ? [
@@ -278,7 +279,8 @@ const InventoryEntry = () => {
                 item.price,
                 item.quantity_on_hand,
                 item.imei,
-                item.storage
+                item.storage,
+                 item.serial_number
             ].join(",")
          ),
         ].join("\n");
@@ -308,7 +310,8 @@ const InventoryEntry = () => {
             "Price",
             "Quantity On Hand",
             "IMEI",
-            "Storage"
+            "Storage",
+             "Serial Number"
         ];
 
 
@@ -326,7 +329,8 @@ const InventoryEntry = () => {
                 item.price,
                 item.quantity_on_hand,
                  item.imei,
-                 item.storage
+                 item.storage,
+                 item.serial_number
             ]
         );
 
@@ -438,7 +442,8 @@ const InventoryEntry = () => {
     const filteredDevices = devices.filter((item) => {
         return (
              (item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.imei.toLowerCase().includes(searchTerm.toLowerCase())
+                item.imei.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                 item.serial_number.toLowerCase().includes(searchTerm.toLowerCase())
             )
          );
     });
@@ -513,7 +518,7 @@ const InventoryEntry = () => {
            <div className="flex mb-4">
                 <input
                     type="text"
-                     placeholder={activeList === "items" ? "Search by Item Name or SKU" : "Search by Device Name or IMEI"}
+                     placeholder={activeList === "items" ? "Search by Item Name or SKU" : "Search by Device Name, IMEI or Serial Number"}
                     value={searchTerm}
                     onChange={handleSearch}
                      className="input-premium mr-2 rounded w-full"

@@ -10,8 +10,9 @@ const EditDeviceModal = ({ isOpen, onClose, onSave, initialItem }) => {
         quantity_on_hand: "",
         imei: "",
         storage: "",
+        serial_number: "",
     });
-      const [categories, setCategories] = useState([]); // New state for categories
+      const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -88,6 +89,10 @@ const EditDeviceModal = ({ isOpen, onClose, onSave, initialItem }) => {
                            <Form.Label>Storage:</Form.Label>
                             <Form.Control type="text" name="storage" value={form.storage} onChange={handleChange}  className="input-premium"/>
                        </Form.Group>
+                       <Form.Group className="mb-3">
+                            <Form.Label>Serial Number:</Form.Label>
+                            <Form.Control type="text" name="serial_number" value={form.serial_number} onChange={handleChange} className="input-premium"/>
+                        </Form.Group>
                          <div className="flex justify-end space-x-2 mt-4">
                                 <Button variant="secondary" onClick={onClose}>Cancel</Button>
                                 <Button variant="primary" type="submit">OK</Button>

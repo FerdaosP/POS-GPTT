@@ -151,7 +151,7 @@
   }
   
   .modal-content-premium {
-    @apply bg-gray-50 border border-gray-200 shadow-soft w-full max-w-lg rounded-2xl p-8 
+    @apply bg-gray-50 border border-gray-200 shadow-soft rounded-2xl p-8 
            transform transition-all duration-300; /* removed animation*/
   }
   

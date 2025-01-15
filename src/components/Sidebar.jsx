@@ -1,4 +1,5 @@
-// Sidebar.jsx
+// File: /src/components/Sidebar.jsx
+
 import React from "react";
 import { Link } from "react-router-dom";
 import {
@@ -65,6 +66,15 @@ const Sidebar = () => {
                             <Package className="mr-2" size={16} /> Inventory
                         </Link>
                     </li>
+                    <li>
+                        <Link
+                            to="/purchase-orders"
+                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
+                            aria-label="Purchase Orders"
+                        >
+                           <ShoppingCart className="mr-2" size={16} /> Purchase Orders
+                        </Link>
+                     </li>
                     <li>
                         <Link
                             to="/reports"
