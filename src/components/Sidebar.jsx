@@ -1,111 +1,75 @@
-// File: /src/components/Sidebar.jsx
-
 import React from "react";
-import { Link } from "react-router-dom";
-import {
-    LayoutDashboard,
-    Users,
-    Wrench,
-    FilePlus,
-    Package,
-    FileText,
-    FileBarChart,
-    ShoppingCart,
-    Settings,
-} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { ShoppingCart, LayoutDashboard, FileText, Settings, Users, Package } from "lucide-react";
 
 const Sidebar = () => {
-    return (
-        <aside className="w-64 bg-gray-800 text-white h-screen">
-            <div className="p-4">
-                <h2 className="text-xl font-bold mb-4">Menu</h2>
-                <ul className="space-y-2">
-                    <li>
-                        <Link
-                            to="/"
-                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                            aria-label="Dashboard"
-                        >
-                            <LayoutDashboard className="mr-2" size={16} /> Dashboard
-                        </Link>
-                    </li>
-                      <li>
-                        <Link
-                            to="/invoices"
-                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                            aria-label="Invoices"
-                        >
-                            <FileText className="mr-2" size={16} /> Invoices
-                        </Link>
-                    </li>
-                    <li>
-                        <Link
-                            to="/customers"
-                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                             aria-label="Customers"
-                        >
-                            <Users className="mr-2" size={16} /> Customers
-                        </Link>
-                    </li>
-                      <li>
-                        <Link
-                            to="/repair-tickets"
-                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                            aria-label="Repair Tickets"
-                        >
-                            <FilePlus className="mr-2" size={16} /> Repair Tickets
-                        </Link>
-                    </li>
+  const location = useLocation();
 
-                    <li>
-                        <Link
-                            to="/inventory"
-                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                            aria-label="Inventory"
-                        >
-                            <Package className="mr-2" size={16} /> Inventory
-                        </Link>
-                    </li>
-                    <li>
-                        <Link
-                            to="/purchase-orders"
-                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                            aria-label="Purchase Orders"
-                        >
-                           <ShoppingCart className="mr-2" size={16} /> Purchase Orders
-                        </Link>
-                     </li>
-                    <li>
-                        <Link
-                            to="/reports"
-                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                             aria-label="Reports"
-                        >
-                            <FileBarChart className="mr-2" size={16} /> Reports
-                        </Link>
-                    </li>
-                     <li>
-                        <Link
-                            to="/pos"
-                            className="flex items-center hover:text-blue-400 px-2 py-1 rounded"
-                            aria-label="Point of Sale"
-                        >
-                            <ShoppingCart className="mr-2" size={16} /> Point of Sale
-                        </Link>
-                    </li>
-                       <li >
-                            <Link
-                                to="/invoices/settings"
-                                className="flex items-center hover:text-blue-400 px-2 py-1 rounded absolute bottom-0 w-full"
-                                  aria-label="Settings"
-                            >
-                                 <Settings className="mr-2" size={16} /> Settings
-                            </Link>
-                        </li>
-                </ul>
-            </div>
-        </aside>
-    );
+  const navItems = [
+    { 
+      name: "Dashboard",
+      path: "/dashboard",
+      icon: <LayoutDashboard size={18} />,
+    },
+    { 
+      name: "POS",
+      path: "/pos",
+      icon: <ShoppingCart size={18} />,
+    },
+    { 
+      name: "Reports",
+      path: "/reports",
+      icon: <FileText size={18} />,
+    },
+    { 
+      name: "Inventory",
+      path: "/inventory",
+      icon: <Package size={18} />,
+    },
+    { 
+      name: "Customers",
+      path: "/customers",
+      icon: <Users size={18} />,
+    },
+  ];
+
+  return (
+    <nav className="w-full fixed top-0 left-0 right-0 h-14 bg-gray-900 border-b border-gray-800 z-50">
+      <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center gap-2">
+          <span className="bg-teal-600 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold text-white">R</span>
+          <span className="text-lg font-semibold text-white">Repair Point</span>
+        </div>
+
+        {/* Navigation Items */}
+        <div className="flex-1 flex items-center gap-1 ml-6 overflow-x-auto scrollbar-hide">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                location.pathname.startsWith(item.path)
+                  ? "bg-teal-600/20 text-teal-400"
+                  : "text-gray-300 hover:bg-gray-800/50 hover:text-gray-100"
+              }`}
+            >
+              {item.icon}
+              <span>{item.name}</span>
+            </Link>
+          ))}
+        </div>
+
+        {/* Settings */}
+        <Link
+          to="/settings"
+          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-800/50 hover:text-gray-100 ml-auto"
+        >
+          <Settings size={18} />
+        </Link>
+      </div>
+    </nav>
+  );
 };
 
 export default Sidebar;
