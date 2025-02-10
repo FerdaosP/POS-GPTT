@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const WarrantyInputModal = ({ device, onClose, onConfirm }) => {
+const WarrantyInputModal = ({ device, defaultPrice, onClose, onConfirm }) => {
   const [months, setMonths] = useState(12);
+  const [price, setPrice] = useState(defaultPrice || 0);
+
+  // If defaultPrice changes, update the local state
+  useEffect(() => {
+    setPrice(defaultPrice || 0);
+  }, [defaultPrice]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -18,6 +24,17 @@ const WarrantyInputModal = ({ device, onClose, onConfirm }) => {
               min="1"
             />
           </div>
+          <div>
+            <label className="block mb-2">Price Estimate</label>
+            <input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="w-full p-2 border rounded"
+              min="0"
+              step="0.01"
+            />
+          </div>
           <div className="flex justify-end space-x-3">
             <button
               onClick={onClose}
@@ -26,7 +43,7 @@ const WarrantyInputModal = ({ device, onClose, onConfirm }) => {
               Cancel
             </button>
             <button
-              onClick={() => onConfirm(months)}
+              onClick={() => onConfirm(months, Number(price))}
               className="px-4 py-2 bg-teal-600 text-white rounded hover:bg-teal-700"
             >
               Add to Transaction

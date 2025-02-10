@@ -1,8 +1,12 @@
+// File: src/repairtickets/AddRepairForm.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { XCircle, FileText, UserPlus } from "lucide-react";
 import { generateRepairID } from "../utils/repairUtils.jsx";
 import PatternModal from "./PatternModal";
-import axios from "axios";
+import CustomerManagerModal from "../components/CustomerManagerModal";
+import { saveRepair } from "../utils/repairManager";
+import { getCustomers } from "../utils/customerUtils"; // Import getCustomers
+import { TechnicianManager } from "../utils/technicianManager"; // Import
 
 const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
   const [newRepair, setNewRepair] = useState({
@@ -27,104 +31,111 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
     attachments: [],
   });
 
-  useEffect(() => {
-    if (defaultCustomer) {
-      setNewRepair(prev => ({
-        ...prev,
-        customerName: defaultCustomer.companyName,
-        phoneNumber: defaultCustomer.phone,
-      }));
-    }
-  }, [defaultCustomer]);
-
   const [modalError, setModalError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [attachmentPreviews, setAttachmentPreviews] = useState([]);
   const [showPatternModal, setShowPatternModal] = useState(false);
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showCustomerForm, setShowCustomerForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
-  const inputRef = useRef(null);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
 
+  // --- Customer Search States and Refs ---
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef(null);
+
+    // --- Technician Search States and Refs ---
+    const [technicians, setTechnicians] = useState([]);
+    const [techSearch, setTechSearch] = useState('');
+    const [showTechDropdown, setShowTechDropdown] = useState(false);
+    const techDropdownRef = useRef(null);
+
+  // --- useEffect for default customer ---
   useEffect(() => {
-    const fetchCustomers = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await axios.get('http://localhost:8000/api/customers/');
-        setCustomers(response.data);
-      } catch (err) {
-        console.error("Error fetching customers:", err);
-        setError("Error loading customer. Please check console.");
-      } finally {
-        setLoading(false);
+    if (defaultCustomer) {
+      setNewRepair((prev) => ({
+        ...prev,
+        customer: defaultCustomer.id,
+        customerName:
+          defaultCustomer.companyName ||
+          `${defaultCustomer.firstName} ${defaultCustomer.lastName}`,
+        phoneNumber: defaultCustomer.phone,
+      }));
+      setSearchQuery(
+        defaultCustomer.companyName ||
+          `${defaultCustomer.firstName} ${defaultCustomer.lastName}`
+      ); // Set search query
+    }
+  }, [defaultCustomer]);
+
+  // --- useEffect for click outside (Customer) ---
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowResults(false);
       }
     };
-
-    fetchCustomers();
-
-    const handleClickOutside = (event) => {
-      if (inputRef.current && !inputRef.current.contains(event.target)) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelectCustomer = (event) => {
-    const selectedCustomerId = event.target.value;
-    const selectedCustomer = customers.find(customer => customer.id === parseInt(selectedCustomerId));
-    if (selectedCustomer) {
-      setNewRepair(prev => ({
-        ...prev,
-        customer: selectedCustomerId,
-        customerName: selectedCustomer.companyName,
-        phoneNumber: selectedCustomer.phone,
-      }));
-      setSearchTerm(`${selectedCustomer.companyName} - ${selectedCustomer.firstName} ${selectedCustomer.lastName}`);
-      setShowDropdown(false);
+    // --- useEffect for click outside (Technician) ---
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+        if (techDropdownRef.current && !techDropdownRef.current.contains(e.target)) {
+            setShowTechDropdown(false);
+        }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Load technicians (Technician)
+    useEffect(() => {
+        setTechnicians(TechnicianManager.getAll());
+    }, []);
+
+  // --- Customer Search Handler ---
+  const handleCustomerSearch = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.length > 0) {
+      const results = getCustomers().filter((customer) => {
+        const searchString = `${customer.firstName || ""} ${
+          customer.lastName || ""
+        } ${customer.companyName || ""} ${customer.phone || ""}`.toLowerCase();
+        return searchString.includes(query.toLowerCase());
+      });
+      setSearchResults(results);
+      setShowResults(true);
     } else {
-      setNewRepair(prev => ({
-        ...prev,
-        customer: null,
-        customerName: "",
-        phoneNumber: "",
-      }));
+      setSearchResults([]);
+      setShowResults(false);
     }
   };
 
-  const handleAddCustomer = () => {
-    setShowCustomerForm(true);
-  };
-
-  const handleSaveNewCustomer = (customer) => {
-    setCustomers(prev => [...prev, customer]);
-    setNewRepair(prev => ({
+  // --- Select Customer Handler ---
+  const handleSelectCustomer = (customer) => {
+    setNewRepair((prev) => ({
       ...prev,
       customer: customer.id,
-      customerName: customer.companyName,
+      customerName:
+        customer.companyName || `${customer.firstName} ${customer.lastName}`,
       phoneNumber: customer.phone,
     }));
-    setSearchTerm(`${customer.companyName} - ${customer.firstName} ${customer.lastName}`);
-    setShowDropdown(false);
-    setShowCustomerForm(false);
-  };
-
-  const handleCancelCustomer = () => {
-    setShowCustomerForm(false);
+    setSearchQuery(
+      customer.companyName || `${customer.firstName} ${customer.lastName}`
+    ); // Set search query
+    setShowCustomerModal(false);
+    setShowResults(false); // Hide results after selection
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     let updatedValue = type === "checkbox" ? checked : value;
 
-    if (name === "completionDate") {
+    if (name === "completionDate" || name === "dateReceived") {
       try {
         const dateObject = value ? new Date(value) : null;
         updatedValue = dateObject ? dateObject.toISOString().split("T")[0] : null;
@@ -133,92 +144,55 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
       }
     }
 
-    if (name === "dateReceived" && value) {
-      try {
-        const dateObject = new Date(value);
-        updatedValue = dateObject.toISOString().split("T")[0];
-      } catch (error) {
-        updatedValue = null;
-      }
-    }
-
-    if (name === "paymentStatus" && value === "Deposit") {
-      setNewRepair(prev => ({ ...prev, [name]: value }));
-    } else if (name === "paymentStatus") {
-      setNewRepair(prev => ({ ...prev, [name]: value }));
-    } else {
-      setNewRepair(prev => ({
-        ...prev,
-        [name]: updatedValue,
-      }));
-    }
-
-    if (name === 'customerName') {
-      setSearchTerm(value);
-      setShowDropdown(true);
-      if (!value) {
-        setNewRepair(prev => ({ ...prev, customer: null }));
-      }
-    }
+    setNewRepair((prev) => ({
+      ...prev,
+      [name]: updatedValue,
+    }));
 
     if (name === "usePattern" && checked) {
       setShowPatternModal(true);
     } else if (name === "usePattern") {
-      setNewRepair(prev => ({ ...prev, pattern: "" }));
+      setNewRepair((prev) => ({ ...prev, pattern: "" }));
     }
   };
 
   const handleAttachmentChange = (e) => {
     const files = Array.from(e.target.files);
-
-    if (files && files.length > 0) {
-      const newPreviews = [];
-      const newAttachments = [];
-
-      files.forEach((file) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          newPreviews.push({
-            name: file.name,
-            type: file.type,
-            url: reader.result,
-          });
-
-          if (newPreviews.length === files.length) {
-            setAttachmentPreviews(prev => [...prev, ...newPreviews]);
-            setNewRepair(prev => ({
-              ...prev,
-              attachments: [...prev.attachments, ...files],
-            }));
-          }
-        };
-        reader.readAsDataURL(file);
-      });
+    if (files.length > 0) {
+      const newPreviews = files.map((file) => ({
+        name: file.name,
+        type: file.type,
+        url: URL.createObjectURL(file),
+      }));
+      setAttachmentPreviews((prev) => [...prev, ...newPreviews]);
+      setNewRepair((prev) => ({
+        ...prev,
+        attachments: [...prev.attachments, ...files],
+      }));
     }
   };
 
   const handleRemoveAttachment = (index) => {
-    setAttachmentPreviews(prevPreviews => prevPreviews.filter((_, i) => i !== index));
-    setNewRepair(prevRepair => {
-      const updatedAttachments = prevRepair.attachments.filter((_, i) => i !== index);
-      return { ...prevRepair, attachments: updatedAttachments };
-    });
+    setAttachmentPreviews((prev) => prev.filter((_, i) => i !== index));
+    setNewRepair((prev) => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, i) => i !== index),
+    }));
   };
+
+    // Filtered technicians (Technician)
+    const filteredTechs = technicians.filter(tech =>
+        tech.name.toLowerCase().includes(techSearch.toLowerCase())
+    );
 
   const handleSubmit = async () => {
     const requiredFields = ["deviceType", "issueDescription", "customer"];
     const errors = {};
-    const phoneRegex = /^\d{10}$/;
-
     requiredFields.forEach((field) => {
       if (!newRepair[field]) {
         errors[field] = `${field.replace(/([A-Z])/g, " $1")} is required.`;
       }
     });
-
-    if (newRepair.phoneNumber && !phoneRegex.test(newRepair.phoneNumber)) {
-      errors.phoneNumber = "Phone number must be 10 digits.";
-    }
 
     if (Object.keys(errors).length > 0) {
       setModalError("Please fill out all required fields before saving.");
@@ -226,80 +200,23 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
       return;
     }
 
-    setModalError("");
-    setFieldErrors({});
-
     try {
-      const formData = new FormData();
-      for (const key in newRepair) {
-        if (key !== "attachments") {
-          if (key === "paymentStatus" && newRepair[key] === "Deposit") {
-            formData.append(key, `${newRepair[key]} ${depositAmount}` || "");
-          } else {
-            formData.append(key, newRepair[key] || "");
-          }
-        }
-      }
+      const repairData = {
+        ...newRepair,
+        customerId: newRepair.customer,
+        ticketNumber: newRepair.repairTicketNumber,
+        status: newRepair.repairStatus,
+        dateReceived: new Date(newRepair.dateReceived).toISOString(),
+        customerName: newRepair.customerName,
+        phone: newRepair.phoneNumber,
+      };
 
-      if (newRepair.attachments && newRepair.attachments.length > 0) {
-        newRepair.attachments.forEach((file) => {
-          formData.append("attachments", file);
-        });
-      }
-
-      await axios.post('http://localhost:8000/api/repairs/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      onSave();
-    } catch (error) {
-      console.error("Error saving repair", error);
-      setModalError(`Error creating repair, check console: ${error.message}`);
-    } finally {
-      setNewRepair({
-        repairTicketNumber: generateRepairID(),
-        paymentStatus: "Not Paid",
-        repairStatus: "Received",
-        customer: null,
-        customerName: "",
-        phoneNumber: "",
-        deviceType: "",
-        imei: "",
-        accessCode: "",
-        usePattern: false,
-        pattern: "",
-        simCode: "",
-        issueDescription: "",
-        priceEstimate: "",
-        repairTechnician: "",
-        dateReceived: new Date().toISOString().split("T")[0],
-        completionDate: "",
-        notes: "",
-        attachments: [],
-      });
-      setAttachmentPreviews([]);
+      const savedRepair = saveRepair(repairData);
+      onSave(savedRepair); // Now call onSave with savedRepair
       onClose();
+    } catch (error) {
+      setModalError(`Error saving repair: ${error.message}`);
     }
-  };
-
-  const handlePatternSelect = (pattern) => {
-    setNewRepair(prev => ({ ...prev, pattern: pattern }));
-    setShowPatternModal(false);
-  };
-
-  const filteredCustomers = customers.filter(customer => {
-    return (
-      customer.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.lastName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
-
-  const renderCustomerOptions = () => {
-    return filteredCustomers.map(customer => (
-      <option value={customer.id} key={customer.id}>
-        {customer.companyName} - {customer.firstName} {customer.lastName}
-      </option>
-    ));
   };
 
   if (!isOpen) return null;
@@ -309,72 +226,67 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
       <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold">New Repair Ticket</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <XCircle size={24} />
           </button>
         </div>
 
         {modalError && (
-          <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{modalError}</div>
+          <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">
+            {modalError}
+          </div>
         )}
 
         <div className="space-y-4">
           {/* Customer Selection Section */}
-          <div className="mb-4" ref={inputRef}>
+          <div className="mb-4" ref={searchRef}>
             <label className="block font-medium mb-2">Select Customer:</label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  placeholder="Search by name"
-                  value={searchTerm}
-                  onChange={handleInputChange}
-                  name="customerName"
-                  onFocus={() => setShowDropdown(true)}
-                  className="border rounded p-2 w-full"
-                />
-                {showDropdown && (
-                  <div className="absolute z-10 w-full bg-white border border-gray-300 rounded mt-1 shadow-lg">
-                    <select
-                      size={5}
-                      onClick={handleSelectCustomer}
-                      className="w-full p-2"
-                    >
-                      <option value="">Select Customer</option>
-                      {renderCustomerOptions()}
-                    </select>
-                  </div>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={handleAddCustomer}
-                className="bg-teal-600 text-white p-2 rounded hover:bg-teal-700"
-              >
-                <UserPlus size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Customer Info Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block font-medium mb-1">Customer Name:</label>
+            <div className="relative">
               <input
                 type="text"
-                value={newRepair.customerName}
-                className="border rounded p-2 w-full bg-gray-50"
-                disabled
+                placeholder="Search by name, company, or phone"
+                value={searchQuery}
+                onChange={handleCustomerSearch}
+                onFocus={() => setShowResults(true)}
+                className="border rounded p-2 w-full"
               />
+              {showResults && (
+                <div className="absolute z-10 w-full bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((customer) => (
+                      <div
+                        key={customer.id}
+                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          handleSelectCustomer(customer); // Use the handler
+                        }}
+                      >
+                        <div className="font-medium">
+                          {customer.companyName ||
+                            `${customer.firstName} ${customer.lastName}`}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {customer.phone}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-2 text-gray-500">No customers found</div>
+                  )}
+                </div>
+              )}
             </div>
-            <div>
-              <label className="block font-medium mb-1">Phone Number:</label>
-              <input
-                type="tel"
-                value={newRepair.phoneNumber}
-                className="border rounded p-2 w-full bg-gray-50"
-                disabled
-              />
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => setShowCustomerModal(true)}
+                className="text-sm text-teal-600 hover:text-teal-700"
+              >
+                + Add New Customer
+              </button>
             </div>
           </div>
 
@@ -392,7 +304,9 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
                 }`}
               />
               {fieldErrors.deviceType && (
-                <span className="text-red-500 text-sm">{fieldErrors.deviceType}</span>
+                <span className="text-red-500 text-sm">
+                  {fieldErrors.deviceType}
+                </span>
               )}
             </div>
             <div>
@@ -488,15 +402,40 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
                 className="border rounded p-2 w-full"
               />
             </div>
+            {/* Technician Input Field (Technician) */}
             <div>
-              <label className="block font-medium mb-1">Technician:</label>
-              <input
-                type="text"
-                name="repairTechnician"
-                value={newRepair.repairTechnician}
-                onChange={handleInputChange}
-                className="border rounded p-2 w-full"
-              />
+                <label className="block font-medium mb-1">Technician:</label>
+                <div className="relative" ref={techDropdownRef}>
+                <input
+                    type="text"
+                    name="repairTechnician"
+                    value={techSearch}
+                    onChange={(e) => {
+                    setTechSearch(e.target.value);
+                    setShowTechDropdown(true);
+                    }}
+                    onFocus={() => setShowTechDropdown(true)}
+                    className="border rounded p-2 w-full"
+                    placeholder="Search technicians..."
+                />
+                {showTechDropdown && (
+                    <div className="absolute z-10 w-full bg-white border rounded shadow-lg max-h-40 overflow-y-auto">
+                    {filteredTechs.map(tech => (
+                        <div
+                        key={tech.id}
+                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                            setNewRepair(prev => ({ ...prev, repairTechnician: tech.name }));
+                            setTechSearch(tech.name);
+                            setShowTechDropdown(false);
+                        }}
+                        >
+                        {tech.name}
+                        </div>
+                    ))}
+                    </div>
+                )}
+                </div>
             </div>
           </div>
 
@@ -526,7 +465,9 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
 
           {/* Issue Description */}
           <div>
-            <label className="block font-medium mb-1">Issue Description *</label>
+            <label className="block font-medium mb-1">
+              Issue Description *
+            </label>
             <textarea
               name="issueDescription"
               value={newRepair.issueDescription}
@@ -537,7 +478,9 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
               rows={3}
             />
             {fieldErrors.issueDescription && (
-              <span className="text-red-500 text-sm">{fieldErrors.issueDescription}</span>
+              <span className="text-red-500 text-sm">
+                {fieldErrors.issueDescription}
+              </span>
             )}
           </div>
 
@@ -605,19 +548,18 @@ const AddRepairForm = ({ isOpen, onClose, onSave, defaultCustomer }) => {
           <PatternModal
             isOpen={showPatternModal}
             onClose={() => setShowPatternModal(false)}
-            onPatternSelect={handlePatternSelect}
+            onPatternSelect={(pattern) => {
+              setNewRepair((prev) => ({ ...prev, pattern }));
+              setShowPatternModal(false);
+            }}
           />
         )}
 
-        {showCustomerForm && (
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto">
-              <CustomerForm
-                onSave={handleSaveNewCustomer}
-                onCancel={handleCancelCustomer}
-              />
-            </div>
-          </div>
+        {showCustomerModal && (
+          <CustomerManagerModal
+            onSelect={handleSelectCustomer}
+            onClose={() => setShowCustomerModal(false)}
+          />
         )}
       </div>
     </div>

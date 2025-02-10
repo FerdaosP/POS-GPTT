@@ -1,6 +1,6 @@
 import React from 'react';
 
-const CustomerProfileCard = ({ customer, onClear, onViewProfile }) => {
+const CustomerProfileCard = ({ customer, onClear, onViewProfile, currencySymbol }) => {
     return (
         <div className="bg-gray-50 p-4 rounded-lg w-full border border-gray-200">
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -34,7 +34,7 @@ const CustomerProfileCard = ({ customer, onClear, onViewProfile }) => {
                     <div className="flex justify-between">
                         <span className="text-gray-500">Store Credits:</span>
                         <span className="font-medium">
-                            ${customer.storeCredits?.toFixed(2) || '0.00'}
+                            {currencySymbol}{customer.storeCredits?.toFixed(2) || '0.00'}
                         </span>
                     </div>
                 </div>

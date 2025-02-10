@@ -26,7 +26,7 @@ ChartJS.register(
   Legend
 );
 
-const Dashboard = () => {
+const Dashboard = ({ currency }) => {
   const [timeFilter, setTimeFilter] = useState('week');
   const transactions = JSON.parse(localStorage.getItem('pos_transactions') || '[]');
   const inventoryItems = JSON.parse(localStorage.getItem('inventory_items') || '[]');
@@ -92,6 +92,7 @@ const Dashboard = () => {
         {/* Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard 
+            currency={currency}
             icon={DollarSign}
             title="Total Sales"
             value={metrics.totalSales.toFixed(2)}
@@ -113,6 +114,7 @@ const Dashboard = () => {
             color="from-blue-50 to-blue-100"
           />
           <MetricCard 
+            currency={currency}
             icon={Activity}
             title="Avg. Transaction"
             value={metrics.avgTransaction.toFixed(2)}
@@ -177,11 +179,17 @@ const Dashboard = () => {
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center">
                       <span className="text-teal-600 font-medium">
-                        {customer.firstName[0]}{customer.lastName[0]}
+                        {customer.type === 'company' 
+                          ? customer.companyName?.slice(0, 2) 
+                          : `${customer.firstName?.[0] || ''}${customer.lastName?.[0] || ''}`}
                       </span>
                     </div>
                     <div>
-                      <div className="font-medium">{customer.firstName} {customer.lastName}</div>
+                      <div className="font-medium">
+                        {customer.type === 'company' 
+                          ? customer.companyName 
+                          : `${customer.firstName} ${customer.lastName}`}
+                      </div>
                       <div className="text-sm text-gray-600">{customer.email}</div>
                     </div>
                   </div>
@@ -210,9 +218,9 @@ const Dashboard = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="text-lg font-semibold">
-                      ${transaction.total.toFixed(2)}
-                    </div>
+                      <div className="text-lg font-semibold">
+                           {currency?.symbol || '$'}{transaction.total.toFixed(2)}
+                      </div>
                     <ArrowUpRight className="text-green-600" size={16} />
                   </div>
                 </div>
@@ -266,12 +274,14 @@ const Dashboard = () => {
   );
 };
 
-const MetricCard = ({ icon: Icon, title, value, change, color }) => (
+const MetricCard = ({ currency, icon: Icon, title, value, change, color }) => (
   <div className={`bg-gradient-to-br ${color} p-6 rounded-xl transition-all hover:shadow-md`}>
     <div className="flex justify-between items-start">
       <div>
         <div className="text-sm text-gray-600 mb-1">{title}</div>
-        <div className="text-2xl font-bold">${value}</div>
+        <div className="text-2xl font-bold">
+          {currency?.symbol || '$'}{value}
+        </div>
       </div>
       <div className="p-3 bg-white rounded-lg shadow-sm">
         <Icon className="w-6 h-6 text-teal-600" />

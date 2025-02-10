@@ -1,3 +1,4 @@
+// CustomerManagerModal.jsx
 import React, { useState, useEffect } from 'react';
 import { saveCustomer, getCustomers, deleteCustomer } from '../utils/customerUtils';
 import CustomerProfileModal from './CustomerProfileModal';
@@ -16,11 +17,13 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
     const [selectedCustomerIds, setSelectedCustomerIds] = useState(new Set());
     const [bulkAction, setBulkAction] = useState('');
     const pageSize = 10;
+    const [refreshCounter, setRefreshCounter] = useState(0); // Add refresh counter
 
     const [customers, setCustomers] = useState([]);
 
     // Add VAT lookup state
     const [isVatLoading, setIsVatLoading] = useState(false);
+
 
     useEffect(() => {
         setIsLoading(true);
@@ -30,7 +33,12 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [refreshCounter]); // Use refreshCounter for reloads
+
+    const refreshCustomers = () => {
+        setRefreshCounter((prev) => prev + 1);
+    };
+
 
     useEffect(() => {
         setSelectedCustomerIds(new Set());
@@ -55,7 +63,7 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
             ].join(' ')
         }[searchFilter];
 
-        return fields.toLowerCase().includes(searchLower);
+        return fields?.toLowerCase().includes(searchLower) ?? false; //added safe navigation
     });
 
     const totalPages = Math.ceil(filteredCustomers.length / pageSize);
@@ -75,9 +83,10 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
             phone: formData.get('phone'),
             email: formData.get('email'),
             primaryAddress: formData.get('address'),
+            taxExempt: formData.get('taxExempt') === 'on', // Retrieve taxExempt status
         };
-       
-          // Add EU VAT validation
+
+        // Add EU VAT validation
         if (customerData.type === 'company') {
             const vatRegex = /^[A-Z]{2}[A-Z0-9]{2,12}$/;
             if (!vatRegex.test(customerData.vatNumber)) {
@@ -90,10 +99,12 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
             const savedCustomer = saveCustomer(
                 editingCustomer ? { ...editingCustomer, ...customerData } : customerData
             );
+            refreshCustomers();
 
-            setCustomers(customers.map(c =>
-                c.id === savedCustomer.id ? savedCustomer : c
-            ));
+            // Removed:  We handle the customer list update via refreshCustomers
+            //setCustomers(customers.map(c =>
+            //    c.id === savedCustomer.id ? savedCustomer : c
+            //));
 
             if (!editingCustomer) onSelect(savedCustomer);
             setShowAddForm(false);
@@ -108,8 +119,8 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this customer?");
         if (confirmDelete) {
             try {
-                const updatedCustomers = deleteCustomer(customerId);
-                setCustomers(updatedCustomers);
+                deleteCustomer(customerId); // No need to store result, we'll refresh
+                refreshCustomers();
             } catch (error) {
                 alert("Failed to delete customer: " + error.message);
             }
@@ -123,8 +134,8 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
 
         if (confirmDelete) {
             try {
-                const updatedCustomers = deleteCustomer([...selectedCustomerIds]);
-                setCustomers(updatedCustomers);
+                selectedCustomerIds.forEach(customerId => deleteCustomer(customerId));
+                refreshCustomers();
                 setSelectedCustomerIds(new Set());
             } catch (error) {
                 alert("Failed to delete customers: " + error.message);
@@ -155,23 +166,23 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
 
     const handleEditCustomer = (customer) => {
         setEditingCustomer(customer);
+        setCustomerType(customer.type); // Set customer type
         setShowAddForm(true);
     };
 
-
-  // Updated VIES lookup function
+    // Updated VIES lookup function
     const fetchCompanyViaVIES = async (vat) => {
         // Extract country code and VAT number
         const countryCode = vat.substring(0, 2).toUpperCase();
         const vatNumber = vat.substring(2).replace(/\s/g, '');
-        
+
         // Validate country code
         const euCountries = [
             'AT', 'BE', 'BG', 'CY', 'CZ', 'DE', 'DK', 'EE', 'EL', 'ES',
             'FI', 'FR', 'HR', 'HU', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT',
             'NL', 'PL', 'PT', 'RO', 'SE', 'SI', 'SK'
         ];
-        
+
         if (!euCountries.includes(countryCode)) {
             throw new Error('Invalid EU country code');
         }
@@ -180,11 +191,11 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
             const response = await fetch(
                 `https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${vatNumber}`
             );
-            
+
             if (!response.ok) throw new Error('VIES service unavailable');
-            
+
             const data = await response.json();
-            
+
             if (data.isValid) {
                 return {
                     companyName: data.name,
@@ -201,18 +212,18 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
     // Auto-fill handler
     const handleVatLookup = async () => {
         if (!editingCustomer?.vatNumber) return;
-        
+
         try {
             setIsVatLoading(true);
             const companyData = await fetchCompanyViaVIES(editingCustomer.vatNumber);
-            
+
             setEditingCustomer(prev => ({
                 ...prev,
                 companyName: companyData.companyName,
                 primaryAddress: companyData.address,
                 vatNumber: companyData.vatNumber
             }));
-            
+
         } catch (error) {
             alert(error.message);
         } finally {
@@ -247,33 +258,37 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
                     {customer.vatNumber && ` • VAT: ${customer.vatNumber}`}
                 </div>
             </div>
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
                 {/* Select Button */}
                 <button
-                    onClick={() => onSelect(customer)}
+                    onClick={() => {
+                        onSelect(customer);
+                        onClose();
+                    }
+                    }
                     className="ml-2 p-2 hover:bg-green-100 rounded text-green-600"
                 >
                     Select
                 </button>
-                  <button
-                      onClick={() => setViewProfile(customer)}
-                      className="ml-2 p-2 hover:bg-gray-200 rounded"
-                  >
-                      <Eye size={18} />
-                  </button>
-                   <button
-                      onClick={() => handleEditCustomer(customer)}
-                      className="ml-2 p-2 hover:bg-blue-100 rounded text-blue-600"
-                  >
-                      <Edit size={18} />
-                  </button>
-                  <button
-                      onClick={() => handleDeleteCustomer(customer.id)}
-                      className="ml-2 p-2 hover:bg-red-100 rounded text-red-600"
-                  >
-                      <Trash2 size={18} />
-                  </button>
-               </div>
+                <button
+                    onClick={() => setViewProfile(customer)}
+                    className="ml-2 p-2 hover:bg-gray-200 rounded"
+                >
+                    <Eye size={18} />
+                </button>
+                <button
+                    onClick={() => handleEditCustomer(customer)}
+                    className="ml-2 p-2 hover:bg-blue-100 rounded text-blue-600"
+                >
+                    <Edit size={18} />
+                </button>
+                <button
+                    onClick={() => handleDeleteCustomer(customer.id)}
+                    className="ml-2 p-2 hover:bg-red-100 rounded text-red-600"
+                >
+                    <Trash2 size={18} />
+                </button>
+            </div>
         </div>
     );
 
@@ -312,76 +327,37 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
     );
 
 
-    // Update your company form section
+    // Updated company form section
     const renderCustomerForm = () => {
         const customer = editingCustomer || {};
         return (
             <form onSubmit={handleSaveCustomer} className="space-y-4">
-                <div className="flex gap-2 mb-4">
-                   <button
-                        type="button"
-                        onClick={() => setCustomerType('person')}
-                        className={`flex-1 py-2 rounded ${customerType === 'person'
-                            ? 'bg-teal-600 text-white'
-                            : 'bg-gray-200'}`}
-                    >
-                        Individual
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setCustomerType('company')}
-                        className={`flex-1 py-2 rounded ${customerType === 'company'
-                            ? 'bg-teal-600 text-white'
-                            : 'bg-gray-200'}`}
-                    >
-                        Company
-                    </button>
-                </div>
-
-                 {customerType === 'company' && (
-                    <div className="relative mb-4">
-                        <input
-                            name="vatNumber"
-                            value={customer.vatNumber || ''}
-                            onChange={(e) => {
-                                const value = e.target.value
-                                    .toUpperCase()
-                                    .replace(/[^A-Z0-9]/g, '')
-                                    .substring(0, 14);
-                                
-                                setEditingCustomer(prev => ({
-                                    ...prev,
-                                    vatNumber: value
-                                }));
-                            }}
-                            placeholder="EU VAT (e.g. DE123456789)"
-                            className="w-full p-2 border rounded pr-32"
-                            pattern="[A-Z]{2}[A-Z0-9]{2,12}"
-                            required
-                        />
+                {/* Remove type toggle buttons when editing */}
+                {!editingCustomer && (
+                    <div className="flex gap-2 mb-4">
                         <button
                             type="button"
-                            onClick={handleVatLookup}
-                            disabled={isVatLoading || !customer.vatNumber?.match(/^[A-Z]{2}/)}
-                            className="absolute right-2 top-2 px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+                            onClick={() => setCustomerType('person')}
+                            className={`flex-1 py-2 rounded ${customerType === 'person'
+                                ? 'bg-teal-600 text-white'
+                                : 'bg-gray-200'}`}
                         >
-                            {isVatLoading ? (
-                                <span className="flex items-center">
-                                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                                    Loading...
-                                </span>
-                            ) : (
-                                'Auto-Fill via VAT'
-                            )}
+                            Individual
                         </button>
-                        <div className="text-sm text-gray-500 mt-1">
-                            Supported formats: DE123456789, FRXX123456789, NL123456789B01, etc.
-                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setCustomerType('company')}
+                            className={`flex-1 py-2 rounded ${customerType === 'company'
+                                ? 'bg-teal-600 text-white'
+                                : 'bg-gray-200'}`}
+                        >
+                            Company
+                        </button>
                     </div>
-                 )}
+                )}
 
                 {customerType === 'company' ? (
-                    
+                    <>
                         <input
                             name="companyName"
                             value={customer.companyName || ''}
@@ -393,7 +369,47 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
                             className="w-full p-2 border rounded"
                             required
                         />
-                    
+                        {/* VAT Number Field */}
+                        <div className="relative mb-4">
+                            <input
+                                name="vatNumber"
+                                value={customer.vatNumber || ''}
+                                onChange={(e) => {
+                                    const value = e.target.value
+                                        .toUpperCase()
+                                        .replace(/[^A-Z0-9]/g, '')
+                                        .substring(0, 14);
+
+                                    setEditingCustomer(prev => ({
+                                        ...prev,
+                                        vatNumber: value
+                                    }));
+                                }}
+                                placeholder="EU VAT (e.g. DE123456789)"
+                                className="w-full p-2 border rounded pr-32"
+                                pattern="[A-Z]{2}[A-Z0-9]{2,12}"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={handleVatLookup}
+                                disabled={isVatLoading || !customer.vatNumber?.match(/^[A-Z]{2}/)}
+                                className="absolute right-2 top-2 px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50"
+                            >
+                                {isVatLoading ? (
+                                    <span className="flex items-center">
+                                        <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                                        Loading...
+                                    </span>
+                                ) : (
+                                    'Auto-Fill via VAT'
+                                )}
+                            </button>
+                            <div className="text-sm text-gray-500 mt-1">
+                                Supported formats: DE123456789, FRXX123456789, NL123456789B01, etc.
+                            </div>
+                        </div>
+                    </>
                 ) : (
                     <>
                         <input
@@ -425,7 +441,7 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
                     className="w-full p-2 border rounded"
                     required
                 />
-                
+
                 <input
                     name="email"
                     type="email"
@@ -437,7 +453,7 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
                     placeholder="Email"
                     className="w-full p-2 border rounded"
                 />
-                
+
                 <textarea
                     name="address"
                     value={customer.primaryAddress || ''}
@@ -449,6 +465,20 @@ const CustomerManagerModal = ({ onSelect, onClose }) => {
                     className="w-full p-2 border rounded"
                     rows="3"
                 />
+
+                {/* Tax Exempt Toggle */}
+                <div>
+                    <label className="inline-flex items-center">
+                        <input
+                            type="checkbox"
+                            className="form-checkbox h-5 w-5 text-teal-600"
+                            checked={editingCustomer?.taxExempt || false}
+                            name = "taxExempt"
+                            onChange={(e) => setEditingCustomer(prev => ({ ...prev, taxExempt: e.target.checked }))}
+                        />
+                        <span className="ml-2 text-gray-700">Tax Exempt</span>
+                    </label>
+                </div>
 
                 <div className="flex gap-2">
                     <button

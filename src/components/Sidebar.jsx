@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ShoppingCart, LayoutDashboard, FileText, Settings, Users, Package } from "lucide-react";
+import { ShoppingCart, LayoutDashboard, FileText, Settings, Users, Package, Wrench } from "lucide-react";
 
 const Sidebar = () => {
   const location = useLocation();
@@ -10,11 +10,6 @@ const Sidebar = () => {
       name: "Dashboard",
       path: "/dashboard",
       icon: <LayoutDashboard size={18} />,
-    },
-    { 
-      name: "POS",
-      path: "/pos",
-      icon: <ShoppingCart size={18} />,
     },
     { 
       name: "Reports",
@@ -30,6 +25,11 @@ const Sidebar = () => {
       name: "Customers",
       path: "/customers",
       icon: <Users size={18} />,
+    },
+    { 
+      name: "Repairs",
+      path: "/repairs",
+      icon: <Wrench size={18} />,
     },
   ];
 
@@ -60,10 +60,24 @@ const Sidebar = () => {
           ))}
         </div>
 
+        {/* POS Button */}
+        <Link
+          to="/pos"
+          className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            location.pathname.startsWith("/pos")
+              ? "bg-teal-600/20 text-teal-400"
+              : "text-gray-300 hover:bg-gray-800/50 hover:text-gray-100"
+          }`}
+          style={{ marginLeft: 'auto', marginRight: '16px', backgroundColor: '#4F46E5', color: 'white' }}
+        >
+          <ShoppingCart size={18} />
+          <span>POS</span>
+        </Link>
+
         {/* Settings */}
         <Link
           to="/settings"
-          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-800/50 hover:text-gray-100 ml-auto"
+          className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-800/50 hover:text-gray-100"
         >
           <Settings size={18} />
         </Link>

@@ -1,6 +1,14 @@
+// File: /src/pos/CheckoutModal.jsx
 import React, { useState, useEffect } from 'react';
 
-const CheckoutModal = ({ total, onClose, onConfirm, initialPayments }) => {
+const CheckoutModal = ({ currencySymbol, total, onClose, onConfirm, initialPayments }) => {
+  // Load custom payment methods from localStorage; expect an array of strings.
+  const customMethods = JSON.parse(localStorage.getItem('customPaymentMethods')) || [];
+  // Use the first custom method if available; otherwise, default to an empty string.
+  const defaultMethod = customMethods.length > 0 ? customMethods[0] : '';
+
+  // Initialize payment rows. If initialPayments exist, parse them;
+  // otherwise, start with one payment row using the custom default method.
   const [payments, setPayments] = useState(() => {
     if (initialPayments) {
       return initialPayments.map(p => {
@@ -12,22 +20,23 @@ const CheckoutModal = ({ total, onClose, onConfirm, initialPayments }) => {
         };
       });
     }
-    return [{ method: 'cash', amount: '', id: Date.now() }];
+    return [{ method: defaultMethod, amount: '', id: Date.now() }];
   });
 
   const [remaining, setRemaining] = useState(total);
-  const [change, setChange] = useState(0); // Add change state
+  const [change, setChange] = useState(0);
 
-  // Update the useEffect to calculate change
+  // Recalculate remaining amount and change whenever payments update.
   useEffect(() => {
     const paid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
     const newRemaining = total - paid;
     setRemaining(Math.max(newRemaining, 0));
-    setChange(Math.max(0, paid - total)); // Calculate change as overpayment
+    setChange(Math.max(0, paid - total));
   }, [payments, total]);
 
+  // When adding a new payment row, use the same default method.
   const addPaymentMethod = () => {
-    setPayments([...payments, { method: 'cash', amount: '', id: Date.now() }]);
+    setPayments([...payments, { method: defaultMethod, amount: '', id: Date.now() }]);
   };
 
   const updatePayment = (id, field, value) => {
@@ -38,51 +47,55 @@ const CheckoutModal = ({ total, onClose, onConfirm, initialPayments }) => {
   };
 
   const removePayment = (id) => {
-    if (payments.length === 1) return;
+    if (payments.length === 1) return; // Prevent removal if it's the only payment row.
     setPayments(payments.filter(p => p.id !== id));
   };
 
-  // Update handleSubmit to pass change
-    const handleSubmit = () => {
+  // When the user submits, ensure that the total has been met.
+  const handleSubmit = () => {
     if (remaining > 0.01) {
-      alert(`Amount remaining: $${remaining.toFixed(2)}`);
+      alert(`Amount remaining: ${currencySymbol}${remaining.toFixed(2)}`);
       return;
     }
-    onConfirm(payments.filter(p => p.amount !== ''), change); // Pass change here
+    onConfirm(payments.filter(p => p.amount !== ''), change);
     onClose();
   };
 
-  // New handler for Full Amount button
+  // Full Amount button: allocate the remaining balance to the first empty payment row,
+  // or add it to the last payment row if no empty rows exist.
   const handleFullAmount = () => {
     const paid = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    const remaining = total - paid;
+    const rem = total - paid;
 
-    if (remaining <= 0) return;
+    if (rem <= 0) return;
 
     let updatedPayments = [...payments];
     let foundEmpty = false;
 
-    // Update first empty payment
     updatedPayments = updatedPayments.map(payment => {
       if (!foundEmpty && (!payment.amount || parseFloat(payment.amount) === 0)) {
         foundEmpty = true;
-        return { ...payment, amount: remaining.toFixed(2) };
+        return { ...payment, amount: rem.toFixed(2) };
       }
       return payment;
     });
 
-    // If no empty found, adjust the last payment
     if (!foundEmpty) {
       const lastIndex = updatedPayments.length - 1;
       const lastPayment = updatedPayments[lastIndex];
-      const newAmount = (parseFloat(lastPayment.amount) + remaining).toFixed(2);
+      const newAmount = (parseFloat(lastPayment.amount) + rem).toFixed(2);
       updatedPayments[lastIndex] = { ...lastPayment, amount: newAmount };
     }
 
     setPayments(updatedPayments);
   };
 
-    // Add change display
+  // Build dropdown options from customMethods only.
+  const paymentMethods = customMethods.map(method => ({
+    value: method,
+    label: method,
+  }));
+
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg p-6 max-w-md w-full pointer-events-auto">
@@ -90,7 +103,7 @@ const CheckoutModal = ({ total, onClose, onConfirm, initialPayments }) => {
         <div className="space-y-4">
           <div className="flex justify-between font-semibold">
             <span>Total Due:</span>
-            <span>${total.toFixed(2)}</span>
+            <span>{currencySymbol}{total.toFixed(2)}</span>
           </div>
 
           <div className="space-y-3">
@@ -101,8 +114,11 @@ const CheckoutModal = ({ total, onClose, onConfirm, initialPayments }) => {
                   onChange={(e) => updatePayment(payment.id, 'method', e.target.value)}
                   className="flex-1 p-2 border rounded"
                 >
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
+                  {paymentMethods.map((pm, index) => (
+                    <option key={index} value={pm.value}>
+                      {pm.label}
+                    </option>
+                  ))}
                 </select>
 
                 <input
@@ -137,13 +153,14 @@ const CheckoutModal = ({ total, onClose, onConfirm, initialPayments }) => {
 
             <div className={`text-sm ${remaining > 0.01 ? 'text-red-600' : 'text-green-600'}`}>
               {remaining > 0.01
-                ? `Remaining: $${remaining.toFixed(2)}`
+                ? `Remaining: ${currencySymbol}${remaining.toFixed(2)}`
                 : 'Payment Complete'}
             </div>
           </div>
-           {change > 0 && (
+
+          {change > 0 && (
             <div className="text-sm text-blue-600 mt-2">
-              Change Due: ${change.toFixed(2)}
+              Change Due: {currencySymbol}{change.toFixed(2)}
             </div>
           )}
 
@@ -154,13 +171,13 @@ const CheckoutModal = ({ total, onClose, onConfirm, initialPayments }) => {
             >
               Cancel
             </button>
-              <button
-                onClick={handleFullAmount}
-                disabled={remaining <= 0.01}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
-              >
-                Full Amount
-              </button>
+            <button
+              onClick={handleFullAmount}
+              disabled={remaining <= 0.01}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
+            >
+              Full Amount
+            </button>
             <button
               onClick={handleSubmit}
               className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-300"

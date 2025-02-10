@@ -1,3 +1,4 @@
+// In /src/pos/TicketModal.jsx
 import React from 'react';
 
 const TicketModal = ({ repairs, onClose, onAddToCart }) => {
@@ -17,8 +18,8 @@ const TicketModal = ({ repairs, onClose, onAddToCart }) => {
             </thead>
             <tbody>
               {repairs.map((repair) => (
-                <tr key={repair.repairTicketNumber} className="border-b">
-                  <td className="p-2">{repair.repairTicketNumber}</td>
+                <tr key={repair.id} className="border-b">
+                  <td className="p-2">{repair.ticketNumber}</td>
                   <td className="p-2">{repair.deviceType}</td>
                   <td className="p-2">{repair.imei}</td>
                   <td className="p-2">

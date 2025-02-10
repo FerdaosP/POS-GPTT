@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const CustomerProfileModal = ({ customer, onClose }) => {
+const CustomerProfileModal = ({ customer, onClose, currencySymbol }) => {
   const [history, setHistory] = useState({
     repairs: [],
     transactions: []
@@ -49,7 +49,7 @@ const CustomerProfileModal = ({ customer, onClose }) => {
             <div key={repair.id} className="p-3 border-b">
               <div className="flex justify-between">
                 <span>{repair.deviceType}</span>
-                <span>${repair.basePrice}</span>
+                <span>{currencySymbol}{repair.basePrice}</span>
               </div>
               <div className="text-sm text-gray-600">
                 {repair.repairTicketNumber} | {repair.status}
@@ -65,7 +65,7 @@ const CustomerProfileModal = ({ customer, onClose }) => {
             <div key={transaction.id} className="p-3 border-b">
               <div className="flex justify-between">
                 <span>{new Date(transaction.date).toLocaleDateString()}</span>
-                <span>${transaction.total.toFixed(2)}</span>
+                <span>{currencySymbol}{transaction.total.toFixed(2)}</span>
               </div>
               <div className="text-sm text-gray-600">
                 {transaction.receiptId}
